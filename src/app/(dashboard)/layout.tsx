@@ -1,0 +1,16 @@
+import { Sidebar } from "@/components/layout/Sidebar";
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <main className="ml-14 xl:ml-20 flex-1 bg-background">
+        {children}
+      </main>
+    </div>
+  );
+}
