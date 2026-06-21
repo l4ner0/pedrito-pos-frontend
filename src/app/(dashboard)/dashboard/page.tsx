@@ -4,9 +4,9 @@ import {
   ShoppingBag,
   TrendingUp,
   Users,
-  BarChart2,
   ChevronDown,
 } from "lucide-react";
+import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
 import { StatusAlert } from "@/components/ui/status-alert";
 import { weeklyData, recentTransactions, lowStockProducts } from "@/lib/mock-data";
 
@@ -205,11 +205,7 @@ export default function DashboardPage() {
             </p>
             <h2 className="mt-0.5 text-xl font-semibold">Resumen del día</h2>
           </div>
-          <button className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary">
-            <BarChart2 size={14} className="text-muted-foreground" />
-            Hoy
-            <ChevronDown size={13} className="text-muted-foreground" />
-          </button>
+          <PeriodFilter />
         </div>
 
         {/* KPI cards */}
