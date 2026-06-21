@@ -1,20 +1,33 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { BarChart2, ChevronDown, Check } from "lucide-react";
+import { BarChart2, ChevronDown, Check, type LucideIcon } from "lucide-react";
 
-const PERIODS = [
-  { value: "today", label: "Hoy" },
-  { value: "yesterday", label: "Ayer" },
-  { value: "week", label: "Hace una semana" },
-] as const;
+export interface FilterOption {
+  value: string;
+  label: string;
+}
 
-type Period = (typeof PERIODS)[number]["value"];
+interface PeriodFilterProps {
+  options: FilterOption[];
+  value?: string;
+  defaultValue?: string;
+  onChange?: (value: string) => void;
+  icon?: LucideIcon;
+}
 
-export function PeriodFilter() {
+export function PeriodFilter({
+  options,
+  value,
+  defaultValue,
+  onChange,
+  icon: Icon = BarChart2,
+}: PeriodFilterProps) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<Period>("today");
+  const [internalSelected, setInternalSelected] = useState(defaultValue ?? options[0]?.value ?? "");
   const ref = useRef<HTMLDivElement>(null);
+
+  const selected = value ?? internalSelected;
 
   useEffect(() => {
     function onOutsideClick(e: MouseEvent) {
@@ -26,7 +39,13 @@ export function PeriodFilter() {
     return () => document.removeEventListener("mousedown", onOutsideClick);
   }, [open]);
 
-  const selectedLabel = PERIODS.find((p) => p.value === selected)!.label;
+  const selectedLabel = options.find((o) => o.value === selected)?.label ?? "";
+
+  function handleSelect(val: string) {
+    if (value === undefined) setInternalSelected(val);
+    onChange?.(val);
+    setOpen(false);
+  }
 
   return (
     <div ref={ref} className="relative">
@@ -34,7 +53,7 @@ export function PeriodFilter() {
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
       >
-        <BarChart2 size={14} className="text-muted-foreground" />
+        <Icon size={14} className="text-muted-foreground" />
         {selectedLabel}
         <ChevronDown
           size={13}
@@ -44,17 +63,14 @@ export function PeriodFilter() {
 
       {open && (
         <div className="absolute right-0 top-full z-50 mt-1.5 min-w-[168px] overflow-hidden rounded-lg border border-border bg-card shadow-md">
-          {PERIODS.map((period) => (
+          {options.map((option) => (
             <button
-              key={period.value}
-              onClick={() => {
-                setSelected(period.value);
-                setOpen(false);
-              }}
+              key={option.value}
+              onClick={() => handleSelect(option.value)}
               className="flex w-full items-center justify-between px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-secondary"
             >
-              {period.label}
-              {selected === period.value && (
+              {option.label}
+              {selected === option.value && (
                 <Check size={13} className="text-primary" />
               )}
             </button>

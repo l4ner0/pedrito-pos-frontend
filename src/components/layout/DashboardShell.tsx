@@ -4,10 +4,15 @@ import { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(
+    () => typeof window !== "undefined" && window.innerWidth < 1024,
+  );
 
   useEffect(() => {
-    if (window.innerWidth < 1024) setCollapsed(true);
+    const mq = window.matchMedia("(max-width: 1023px)");
+    const handler = (e: MediaQueryListEvent) => setCollapsed(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
   }, []);
 
   return (
