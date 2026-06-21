@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
+  ChevronRight,
   Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -20,17 +21,32 @@ const navItems = [
   { href: "/configuracion", icon: Settings, label: "Configuración" },
 ] as const;
 
-export function Sidebar() {
+interface SidebarProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex w-52 flex-col bg-nav px-3 py-5">
+    <aside
+      className="fixed inset-y-0 left-0 z-40 flex flex-col overflow-hidden bg-nav px-3 py-5 transition-[width] duration-300 ease-in-out"
+      style={{ width: collapsed ? "4rem" : "13rem" }}
+    >
       {/* Logo */}
-      <div className="mb-8 flex items-center gap-3 px-2">
+      <div className="mb-8 flex h-9 items-center gap-3 px-2">
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand">
           <Store size={18} className="text-white" />
         </div>
-        <span className="text-base font-semibold text-white">MiniMarket</span>
+        <span
+          className={cn(
+            "overflow-hidden whitespace-nowrap text-base font-semibold text-white transition-all duration-300",
+            collapsed ? "max-w-0 opacity-0" : "max-w-xs opacity-100",
+          )}
+        >
+          MiniMarket
+        </span>
       </div>
 
       {/* Nav */}
@@ -42,14 +58,22 @@ export function Sidebar() {
               key={href}
               href={href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "flex h-10 items-center rounded-lg text-sm font-medium transition-colors",
+                collapsed ? "justify-center" : "gap-3 px-3",
                 isActive
                   ? "bg-white/[0.12] text-white"
                   : "text-white/50 hover:bg-white/[0.06] hover:text-white",
               )}
             >
-              <Icon size={18} />
-              {label}
+              <Icon size={18} className="shrink-0" />
+              <span
+                className={cn(
+                  "overflow-hidden whitespace-nowrap transition-all duration-300",
+                  collapsed ? "max-w-0 opacity-0" : "max-w-xs opacity-100",
+                )}
+              >
+                {label}
+              </span>
             </Link>
           );
         })}
@@ -57,13 +81,40 @@ export function Sidebar() {
 
       {/* Bottom */}
       <div className="flex flex-col gap-1">
-        <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white">
-          <LogOut size={18} />
-          Cerrar sesión
+        <button
+          className={cn(
+            "flex h-10 w-full items-center rounded-lg text-sm font-medium text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white",
+            collapsed ? "justify-center" : "gap-3 px-3",
+          )}
+        >
+          <LogOut size={18} className="shrink-0" />
+          <span
+            className={cn(
+              "overflow-hidden whitespace-nowrap transition-all duration-300",
+              collapsed ? "max-w-0 opacity-0" : "max-w-xs opacity-100",
+            )}
+          >
+            Cerrar sesión
+          </span>
         </button>
-        <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white">
-          <ChevronLeft size={18} />
-          Contraer
+
+        <button
+          onClick={onToggle}
+          className={cn(
+            "flex h-10 w-full items-center rounded-lg text-sm font-medium text-white/50 transition-colors hover:bg-white/[0.06] hover:text-white",
+            collapsed ? "justify-center" : "gap-3 px-3",
+          )}
+        >
+          {collapsed ? (
+            <ChevronRight size={18} className="shrink-0" />
+          ) : (
+            <>
+              <ChevronLeft size={18} className="shrink-0" />
+              <span className="overflow-hidden whitespace-nowrap transition-all duration-300 max-w-xs opacity-100">
+                Contraer
+              </span>
+            </>
+          )}
         </button>
       </div>
     </aside>
