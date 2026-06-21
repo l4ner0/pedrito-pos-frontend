@@ -29,12 +29,17 @@ export function InventoryContent({ products }: InventoryContentProps) {
   }
 
   function handleFormSuccess(isEdit: boolean) {
-    setToastMessage(isEdit ? "Producto actualizado correctamente" : "Producto agregado correctamente");
+    setToastMessage(
+      isEdit
+        ? "Producto actualizado correctamente"
+        : "Producto agregado correctamente",
+    );
   }
 
   function handleDelete() {
     // TODO: conectar con store/API cuando se implemente
     setDeletingProduct(null);
+    setToastMessage("Producto eliminado correctamente");
   }
 
   return (
