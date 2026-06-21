@@ -37,9 +37,10 @@ interface ProductFormModalProps {
   open: boolean;
   product: Product | null;
   onClose: () => void;
+  onSuccess: (isEdit: boolean) => void;
 }
 
-export function ProductFormModal({ open, product, onClose }: ProductFormModalProps) {
+export function ProductFormModal({ open, product, onClose, onSuccess }: ProductFormModalProps) {
   const [form, setForm] = useState<FormValues>(EMPTY_FORM);
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function ProductFormModal({ open, product, onClose }: ProductFormModalPro
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     onClose();
+    onSuccess(isEdit);
   }
 
   if (!open) return null;

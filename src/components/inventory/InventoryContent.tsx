@@ -5,6 +5,7 @@ import { InventoryFilters } from "./InventoryFilters";
 import { ProductTable } from "./ProductTable";
 import { ProductFormModal } from "./ProductFormModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
+import { Toast } from "@/components/ui/Toast";
 import { type Product } from "@/lib/mock-data";
 
 interface InventoryContentProps {
@@ -15,6 +16,7 @@ export function InventoryContent({ products }: InventoryContentProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
+  const [toastMessage, setToastMessage] = useState("");
 
   function openAdd() {
     setEditingProduct(null);
@@ -24,6 +26,10 @@ export function InventoryContent({ products }: InventoryContentProps) {
   function openEdit(product: Product) {
     setEditingProduct(product);
     setIsFormOpen(true);
+  }
+
+  function handleFormSuccess(isEdit: boolean) {
+    setToastMessage(isEdit ? "Producto actualizado correctamente" : "Producto agregado correctamente");
   }
 
   function handleDelete() {
@@ -45,6 +51,7 @@ export function InventoryContent({ products }: InventoryContentProps) {
         open={isFormOpen}
         product={editingProduct}
         onClose={() => setIsFormOpen(false)}
+        onSuccess={handleFormSuccess}
       />
       <ConfirmModal
         open={deletingProduct !== null}
@@ -54,6 +61,12 @@ export function InventoryContent({ products }: InventoryContentProps) {
         confirmLabel="Eliminar"
         onConfirm={handleDelete}
         onClose={() => setDeletingProduct(null)}
+      />
+      <Toast
+        open={toastMessage !== ""}
+        variant="success"
+        message={toastMessage}
+        onClose={() => setToastMessage("")}
       />
     </>
   );
