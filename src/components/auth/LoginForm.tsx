@@ -14,7 +14,7 @@ export function LoginForm() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    router.push("/ventas");
+    router.push("/");
   }
 
   return (
@@ -30,7 +30,9 @@ export function LoginForm() {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-foreground">Contraseña</label>
+        <label className="text-sm font-medium text-foreground">
+          Contraseña
+        </label>
         <Input
           type={showPassword ? "text" : "password"}
           placeholder="Ingresa tu contraseña"
@@ -49,7 +51,12 @@ export function LoginForm() {
         />
       </div>
 
-      <Button type="submit" size="pill" className="mt-1">
+      <Button
+        type="submit"
+        size="pill"
+        className="mt-1"
+        disabled={!usuario.trim() || !password}
+      >
         Iniciar sesión
       </Button>
     </form>
