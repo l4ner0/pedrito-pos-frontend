@@ -34,26 +34,36 @@ No test runner is configured yet.
 ```
 src/
 ├── app/
-│   ├── (auth)/login/       # Login page — no sidebar
-│   ├── (dashboard)/        # Protected routes — all share sidebar layout
-│   │   ├── ventas/         # Main POS screen (planned)
-│   │   ├── productos/      # Products (planned)
-│   │   ├── inventario/     # Inventory (planned)
-│   │   └── reportes/       # Reports (planned)
-│   ├── layout.tsx          # Root layout — loads Inter font, globals.css
-│   ├── page.tsx            # Redirects → /login
-│   └── globals.css         # Tailwind v4 @theme tokens + shadcn CSS vars
+│   ├── (auth)/login/           # Login page — no sidebar
+│   ├── (dashboard)/            # Protected routes — all share DashboardShell
+│   │   └── dashboard/          # /dashboard — KPI cards, chart, transactions
+│   ├── layout.tsx              # Root layout — loads Inter font, globals.css
+│   ├── page.tsx                # Redirects → /login
+│   └── globals.css             # Tailwind v4 @theme tokens + shadcn CSS vars
 ├── components/
-│   ├── ui/                 # shadcn/ui primitives — do not edit directly
-│   ├── auth/               # Auth-specific components (LoginForm)
-│   └── layout/             # Sidebar
+│   ├── ui/                     # shadcn/ui primitives — do not edit directly
+│   │   └── status-alert.tsx    # Custom alert (not shadcn) — exception to rule above
+│   ├── auth/                   # Auth-specific components (LoginForm)
+│   ├── layout/
+│   │   ├── DashboardShell.tsx  # Owns sidebar collapse state; wraps Sidebar + <main>
+│   │   ├── Sidebar.tsx         # Fixed sidebar with collapsible nav
+│   │   └── UserMenu.tsx        # Avatar dropdown (Perfil / Configuración / Cerrar sesión)
+│   └── dashboard/
+│       └── PeriodFilter.tsx    # Period dropdown (Hoy / Ayer / Hace una semana)
 └── lib/
-    └── utils.ts            # cn() helper (clsx + tailwind-merge)
+    ├── utils.ts                # cn() helper (clsx + tailwind-merge)
+    └── mock-data.ts            # weeklyData, recentTransactions, lowStockProducts
 ```
 
-**Planned but not yet created:** `hooks/`, `store/` (Zustand), `lib/mock-data.ts`, `types/`.
+**Still planned:** `hooks/`, `store/` (Zustand), `types/`, and routes for `ventas/`, `inventario/`, `configuracion/`.
 
-Route groups: `(auth)` renders without sidebar; `(dashboard)` wraps all protected routes in the shared shell (sidebar fixed at left edge). No real backend — all data will come from `lib/mock-data.ts`.
+Route groups: `(auth)` renders without sidebar; `(dashboard)` wraps all protected routes in `DashboardShell`. No real backend — all data comes from `lib/mock-data.ts`.
+
+### Sidebar collapse
+
+`DashboardShell` holds the `collapsed` boolean state and passes it to `Sidebar`. On mount it auto-collapses when `window.innerWidth < 1024`. Width is set via inline style: `4rem` collapsed, `13rem` expanded — `<main>` matches with a `marginLeft` transition. There are no static Tailwind breakpoint classes for this; it is entirely JS-driven.
+
+Custom dropdowns (`UserMenu`, `PeriodFilter`) follow the same pattern: local `open` state + `useEffect` to close on outside click.
 
 ## Design system
 
@@ -86,7 +96,7 @@ Note: `--destructive` (shadcn) and `--danger` (custom) both map to `#C45B5B`. Us
 
 **Tone:** Muted and desaturated. High contrast only on primary actions, totals, and alerts.
 
-**Navigation:** Icon-only sidebar at `w-14`; expands to `w-20` with labels at `xl:` breakpoint. Nav items: Ventas, Productos, Inventario, Reportes. The `(dashboard)/layout.tsx` offsets `<main>` with `ml-14 xl:ml-20`.
+**Navigation items:** Dashboard, Inventario, Ventas, Configuración.
 
 **Target viewports:** Laptop 1280–1440px (primary), Tablet 768–1024px. No mobile support.
 
