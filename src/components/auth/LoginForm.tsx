@@ -5,16 +5,37 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { StatusAlert } from "@/components/ui/status-alert";
+
+const MOCK_CREDENTIALS = { usuario: "admin", password: "admin123" };
 
 export function LoginForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    router.push("/");
+    if (
+      usuario === MOCK_CREDENTIALS.usuario &&
+      password === MOCK_CREDENTIALS.password
+    ) {
+      router.push("/");
+    } else {
+      setError(true);
+    }
+  }
+
+  function handleUsuarioChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setUsuario(e.target.value);
+    if (error) setError(false);
+  }
+
+  function handlePasswordChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setPassword(e.target.value);
+    if (error) setError(false);
   }
 
   return (
@@ -25,7 +46,7 @@ export function LoginForm() {
           type="text"
           placeholder="Ingresa tu usuario"
           value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
+          onChange={handleUsuarioChange}
         />
       </div>
 
@@ -37,7 +58,7 @@ export function LoginForm() {
           type={showPassword ? "text" : "password"}
           placeholder="Ingresa tu contraseña"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={handlePasswordChange}
           endAdornment={
             <button
               type="button"
@@ -50,6 +71,13 @@ export function LoginForm() {
           }
         />
       </div>
+
+      {error && (
+        <StatusAlert
+          variant="error"
+          message="Usuario o contraseña incorrectos."
+        />
+      )}
 
       <Button
         type="submit"
