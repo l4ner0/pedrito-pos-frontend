@@ -49,7 +49,7 @@ export function InventoryFilters() {
           onChange={(e) => setSearchValue(e.target.value)}
           onBlur={(e) => commitSearch(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && commitSearch(e.currentTarget.value)}
-          className="w-64 rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30"
+          className="w-44 rounded-lg border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 md:w-52 xl:w-64"
         />
       </div>
 
