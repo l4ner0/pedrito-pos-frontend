@@ -1,3 +1,38 @@
+export type ProductCategory =
+  | "bebidas"
+  | "snacks"
+  | "lacteos"
+  | "panaderia"
+  | "limpieza"
+  | "frutas";
+
+export interface Product {
+  id: string;
+  name: string;
+  category: ProductCategory;
+  stock: number;
+  cost: number;
+  price: number;
+  image?: string;
+}
+
+export const LOW_STOCK_THRESHOLD = 8;
+
+export const products: Product[] = [
+  { id: "1",  name: "Coca-Cola 500ml",       category: "bebidas",   stock: 48, cost: 0.90, price: 1.50 },
+  { id: "2",  name: "Agua San Luis 625ml",    category: "bebidas",   stock: 6,  cost: 0.50, price: 1.00 },
+  { id: "3",  name: "Doritos Nacho 40g",      category: "snacks",    stock: 30, cost: 1.20, price: 2.50 },
+  { id: "4",  name: "Leche Gloria 1L",        category: "lacteos",   stock: 4,  cost: 3.20, price: 4.80 },
+  { id: "5",  name: "Pan de Molde Bimbo",     category: "panaderia", stock: 12, cost: 3.50, price: 5.50 },
+  { id: "6",  name: "Jabón Bolívar 200g",     category: "limpieza",  stock: 20, cost: 1.80, price: 3.00 },
+  { id: "7",  name: "Manzana Roja kg",        category: "frutas",    stock: 3,  cost: 2.00, price: 3.50 },
+  { id: "8",  name: "Inca Kola 1.5L",         category: "bebidas",   stock: 24, cost: 2.20, price: 3.80 },
+  { id: "9",  name: "Pringles Original",      category: "snacks",    stock: 15, cost: 4.50, price: 7.50 },
+  { id: "10", name: "Yogurt Toni 200g",       category: "lacteos",   stock: 8,  cost: 1.40, price: 2.20 },
+  { id: "11", name: "Croissant Mantequilla",  category: "panaderia", stock: 5,  cost: 1.20, price: 2.00 },
+  { id: "12", name: "Detergente Ariel 500g",  category: "limpieza",  stock: 18, cost: 5.00, price: 8.50 },
+];
+
 export interface ChartPoint {
   day: string;
   value: number;

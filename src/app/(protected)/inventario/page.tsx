@@ -2,8 +2,22 @@ import { Suspense } from "react";
 import { Bell } from "lucide-react";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { InventoryFilters } from "@/components/inventory/InventoryFilters";
+import { ProductTable } from "@/components/inventory/ProductTable";
+import { products, type ProductCategory } from "@/lib/mock-data";
 
-export default function InventarioPage() {
+export default async function InventarioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; categoria?: string }>;
+}) {
+  const { q = "", categoria = "todos" } = await searchParams;
+
+  const filtered = products.filter((p) => {
+    const matchesSearch = !q || p.name.toLowerCase().includes(q.toLowerCase());
+    const matchesCategory = categoria === "todos" || p.category === (categoria as ProductCategory);
+    return matchesSearch && matchesCategory;
+  });
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 lg:h-16 lg:px-8">
@@ -21,6 +35,7 @@ export default function InventarioPage() {
         <Suspense>
           <InventoryFilters />
         </Suspense>
+        <ProductTable products={filtered} />
       </div>
     </div>
   );
