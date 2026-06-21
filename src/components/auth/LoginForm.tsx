@@ -22,7 +22,7 @@ export function LoginForm() {
       usuario === MOCK_CREDENTIALS.usuario &&
       password === MOCK_CREDENTIALS.password
     ) {
-      router.push("/");
+      router.push("/dashboard");
     } else {
       setError(true);
     }

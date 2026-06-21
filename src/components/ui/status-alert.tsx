@@ -4,7 +4,7 @@ type StatusAlertVariant = "success" | "warning" | "error";
 
 interface StatusAlertProps {
   variant: StatusAlertVariant;
-  message: string;
+  message: React.ReactNode;
   className?: string;
 }
 
