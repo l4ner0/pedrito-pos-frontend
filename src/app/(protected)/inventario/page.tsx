@@ -1,6 +1,4 @@
-import { Suspense } from "react";
-import { InventoryFilters } from "@/components/inventory/InventoryFilters";
-import { ProductTable } from "@/components/inventory/ProductTable";
+import { InventoryContent } from "@/components/inventory/InventoryContent";
 import { products, type ProductCategory } from "@/lib/mock-data";
 
 export default async function InventarioPage({
@@ -18,10 +16,7 @@ export default async function InventarioPage({
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-6 lg:space-y-6 lg:p-8">
-      <Suspense>
-        <InventoryFilters />
-      </Suspense>
-      <ProductTable products={filtered} />
+      <InventoryContent products={filtered} />
     </div>
   );
 }

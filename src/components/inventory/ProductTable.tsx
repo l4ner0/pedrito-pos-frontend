@@ -1,7 +1,9 @@
-import { Pencil, Trash2 } from "lucide-react";
+"use client";
+
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { ProductAvatar } from "@/components/ui/ProductAvatar";
 import { type Product, LOW_STOCK_THRESHOLD } from "@/lib/mock-data";
+import { RowActions } from "./RowActions";
 
 const CATEGORY_LABEL: Record<string, string> = {
   bebidas:   "Bebidas",
@@ -27,9 +29,10 @@ function formatPrice(amount: number) {
 
 interface ProductTableProps {
   products: Product[];
+  onEdit: (product: Product) => void;
 }
 
-export function ProductTable({ products }: ProductTableProps) {
+export function ProductTable({ products, onEdit }: ProductTableProps) {
   const lowStockCount = products.filter((p) => p.stock < LOW_STOCK_THRESHOLD).length;
 
   return (
@@ -111,20 +114,7 @@ export function ProductTable({ products }: ProductTableProps) {
                     </td>
 
                     <td className="py-2.5 pl-3 pr-4 lg:py-3 lg:pl-4 lg:pr-6">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          type="button"
-                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                      <RowActions onEdit={() => onEdit(product)} />
                     </td>
                   </tr>
                 );

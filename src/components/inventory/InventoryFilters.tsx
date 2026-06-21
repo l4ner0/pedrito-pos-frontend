@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Filter, Plus } from "lucide-react";
 import { PeriodFilter } from "@/components/ui/PeriodFilter";
 
-const CATEGORY_OPTIONS = [
+export const CATEGORY_OPTIONS = [
   { value: "todos", label: "Todos" },
   { value: "bebidas", label: "Bebidas" },
   { value: "snacks", label: "Snacks" },
@@ -15,7 +15,11 @@ const CATEGORY_OPTIONS = [
   { value: "frutas", label: "Frutas" },
 ];
 
-export function InventoryFilters() {
+interface InventoryFiltersProps {
+  onAdd: () => void;
+}
+
+export function InventoryFilters({ onAdd }: InventoryFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchValue, setSearchValue] = useState(searchParams.get("q") ?? "");
@@ -62,7 +66,10 @@ export function InventoryFilters() {
 
       <div className="flex-1" />
 
-      <button className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90">
+      <button
+        onClick={onAdd}
+        className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+      >
         <Plus size={15} />
         Agregar producto
       </button>
