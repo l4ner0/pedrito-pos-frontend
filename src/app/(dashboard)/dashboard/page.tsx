@@ -156,7 +156,7 @@ function KPICard({ label, value, sub, icon: Icon, iconClass }: KPICardProps) {
           <Icon size={17} />
         </span>
       </div>
-      <p className="mt-3 text-2xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-3 text-xl font-semibold tracking-tight lg:text-2xl">{value}</p>
       <p className="mt-1 text-sm text-muted-foreground">{sub}</p>
     </div>
   );
@@ -175,28 +175,28 @@ export default function DashboardPage() {
   return (
     <div className="flex min-h-screen flex-col">
       {/* Topbar */}
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-8">
-        <h1 className="text-lg font-semibold">Dashboard</h1>
-        <div className="flex items-center gap-4">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 lg:h-16 lg:px-8">
+        <h1 className="text-base font-semibold lg:text-lg">Dashboard</h1>
+        <div className="flex items-center gap-3 lg:gap-4">
           <button className="relative text-muted-foreground transition-colors hover:text-foreground">
-            <Bell size={20} />
+            <Bell size={19} />
             <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-danger" />
           </button>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">
               AT
             </div>
-            <div className="leading-tight">
+            <div className="hidden leading-tight lg:block">
               <p className="text-sm font-medium">Amelia Torres</p>
               <p className="text-xs text-muted-foreground">Administrador</p>
             </div>
-            <ChevronDown size={14} className="text-muted-foreground" />
+            <ChevronDown size={13} className="hidden text-muted-foreground lg:block" />
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <div className="flex-1 space-y-6 p-8">
+      <div className="flex-1 space-y-4 p-4 md:p-6 lg:space-y-6 lg:p-8">
         {/* Date + filter */}
         <div className="flex items-start justify-between">
           <div>
@@ -213,7 +213,7 @@ export default function DashboardPage() {
         </div>
 
         {/* KPI cards */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
           <KPICard
             label="Recaudado hoy"
             value="S/ 547.20"
@@ -248,7 +248,7 @@ export default function DashboardPage() {
         <StatusAlert variant="warning" message={lowStockMsg} />
 
         {/* Chart + Transactions */}
-        <div className="grid grid-cols-[1fr_360px] gap-4">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_360px] lg:gap-4">
           <SalesChart />
 
           {/* Transactions */}

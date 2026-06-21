@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sidebar } from "./Sidebar";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    if (window.innerWidth < 1024) setCollapsed(true);
+  }, []);
 
   return (
     <div className="flex min-h-screen">
