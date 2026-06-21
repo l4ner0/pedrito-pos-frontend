@@ -56,7 +56,7 @@ function SalesChart() {
   const areaPath = `${linePath} L ${right},${bottom} L ${left},${bottom} Z`;
 
   return (
-    <div className="rounded-xl border border-border bg-card p-6">
+    <div className="rounded-xl border border-border bg-card shadow-sm p-6">
       <div className="mb-5 flex items-center justify-between">
         <h3 className="text-base font-semibold">Ventas por día</h3>
         <span className="rounded-full bg-brand/10 px-3 py-1 text-xs font-medium text-brand">
@@ -147,7 +147,7 @@ interface KPICardProps {
 
 function KPICard({ label, value, sub, icon: Icon, iconClass }: KPICardProps) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5">
+    <div className="rounded-xl border border-border bg-card shadow-sm p-5">
       <div className="flex items-start justify-between">
         <p className="text-sm text-muted-foreground">{label}</p>
         <span
@@ -252,7 +252,7 @@ export default function DashboardPage() {
           <SalesChart />
 
           {/* Transactions */}
-          <div className="rounded-xl border border-border bg-card p-6">
+          <div className="rounded-xl border border-border bg-card shadow-sm p-6">
             <h3 className="mb-5 text-base font-semibold">
               Últimas transacciones
             </h3>
