@@ -1,12 +1,6 @@
-import {
-  Bell,
-  DollarSign,
-  ShoppingBag,
-  TrendingUp,
-  Users,
-  ChevronDown,
-} from "lucide-react";
+import { Bell, DollarSign, ShoppingBag, TrendingUp, Users } from "lucide-react";
 import { PeriodFilter } from "@/components/dashboard/PeriodFilter";
+import { UserMenu } from "@/components/layout/UserMenu";
 import { StatusAlert } from "@/components/ui/status-alert";
 import { weeklyData, recentTransactions, lowStockProducts } from "@/lib/mock-data";
 
@@ -182,16 +176,7 @@ export default function DashboardPage() {
             <Bell size={19} />
             <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-danger" />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">
-              AT
-            </div>
-            <div className="hidden leading-tight lg:block">
-              <p className="text-sm font-medium">Amelia Torres</p>
-              <p className="text-xs text-muted-foreground">Administrador</p>
-            </div>
-            <ChevronDown size={13} className="hidden text-muted-foreground lg:block" />
-          </div>
+          <UserMenu />
         </div>
       </header>
 
