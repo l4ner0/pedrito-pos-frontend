@@ -30,9 +30,10 @@ function formatPrice(amount: number) {
 interface ProductTableProps {
   products: Product[];
   onEdit: (product: Product) => void;
+  onDelete: (product: Product) => void;
 }
 
-export function ProductTable({ products, onEdit }: ProductTableProps) {
+export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) {
   const lowStockCount = products.filter((p) => p.stock < LOW_STOCK_THRESHOLD).length;
 
   return (
@@ -114,7 +115,7 @@ export function ProductTable({ products, onEdit }: ProductTableProps) {
                     </td>
 
                     <td className="py-2.5 pl-3 pr-4 lg:py-3 lg:pl-4 lg:pr-6">
-                      <RowActions onEdit={() => onEdit(product)} />
+                      <RowActions onEdit={() => onEdit(product)} onDelete={() => onDelete(product)} />
                     </td>
                   </tr>
                 );

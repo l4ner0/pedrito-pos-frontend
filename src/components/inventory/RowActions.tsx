@@ -4,9 +4,10 @@ import { Pencil, Trash2 } from "lucide-react";
 
 interface RowActionsProps {
   onEdit: () => void;
+  onDelete: () => void;
 }
 
-export function RowActions({ onEdit }: RowActionsProps) {
+export function RowActions({ onEdit, onDelete }: RowActionsProps) {
   return (
     <div className="flex items-center justify-end gap-1">
       <button
@@ -18,6 +19,7 @@ export function RowActions({ onEdit }: RowActionsProps) {
       </button>
       <button
         type="button"
+        onClick={onDelete}
         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-danger/10 hover:text-danger"
       >
         <Trash2 size={14} />
