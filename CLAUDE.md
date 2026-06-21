@@ -100,6 +100,14 @@ Note: `--destructive` (shadcn) and `--danger` (custom) both map to `#C45B5B`. Us
 
 **Target viewports:** Laptop 1280–1440px (primary), Tablet 768–1024px. No mobile support.
 
+## Atomic components
+
+When implementing new features, always extract reusable UI elements as atomic components under `src/components/ui/`. A component is atomic if it can be used in more than one context (badges, avatars, inputs, specialized buttons, etc.). Section-specific components live in their own folder (`inventory/`, `dashboard/`, etc.).
+
+## Language
+
+All console communication and responses to the user must be in **Spanish**.
+
 ## Constraints
 
 - No database connections or ORMs.
