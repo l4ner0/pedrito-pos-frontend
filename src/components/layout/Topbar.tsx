@@ -5,9 +5,9 @@ import { Bell } from "lucide-react";
 import { UserMenu } from "./UserMenu";
 
 const TITLE_BY_PATH: Record<string, string> = {
-  "/dashboard":     "Dashboard",
-  "/inventario":    "Inventario",
-  "/ventas":        "Punto de Venta",
+  "/dashboard": "Dashboard",
+  "/inventario": "Inventario",
+  "/ventas": "Ventas",
   "/configuracion": "Configuración",
 };
 
