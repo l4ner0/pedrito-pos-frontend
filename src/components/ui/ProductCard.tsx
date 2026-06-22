@@ -16,7 +16,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
       onClick={() => onClick(product)}
       disabled={isOutOfStock}
       className={cn(
-        "flex w-full flex-col items-center gap-2 rounded-xl bg-card p-4 text-center shadow-sm transition-all hover:shadow-md active:scale-[0.98]",
+        "flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl bg-card p-4 text-center shadow-sm transition-all hover:shadow-md active:scale-[0.98]",
         "disabled:cursor-not-allowed disabled:opacity-50",
       )}
     >
