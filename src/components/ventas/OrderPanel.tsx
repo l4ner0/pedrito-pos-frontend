@@ -5,12 +5,22 @@ import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { DiscountSelector } from "./DiscountSelector";
 import { CheckoutModal, type PaymentMethod } from "./CheckoutModal";
-import { Toast } from "@/components/ui/Toast";
+import { SaleSuccessModal, type SaleSuccessData } from "./SaleSuccessModal";
 import { cn } from "@/lib/utils";
+
+const BASE_ORDER_NUMBER = 49;
+
+function formatDatetime(): string {
+  const now = new Date();
+  const date = now.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const time = now.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${date} · ${time}`;
+}
 
 export function OrderPanel() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
+  const [orderNumber, setOrderNumber] = useState(BASE_ORDER_NUMBER);
+  const [saleData, setSaleData] = useState<SaleSuccessData | null>(null);
 
   const { items, discountAmount, addItem, removeItem, updateQuantity, clearCart, setDiscount } =
     useCartStore();
@@ -20,15 +30,23 @@ export function OrderPanel() {
   const total = subtotal - discount;
   const isEmpty = items.length === 0;
 
-  function handleConfirm(method: PaymentMethod, received: number) {
-    const change = method === "efectivo" ? received - total : 0;
+  function handleConfirm(method: PaymentMethod) {
+    setSaleData({
+      ticketId: `#${String(orderNumber).padStart(4, "0")}`,
+      datetime: formatDatetime(),
+      items: [...items],
+      subtotal,
+      discountAmount,
+      total,
+      method,
+    });
     setIsCheckoutOpen(false);
+  }
+
+  function handleCloseSuccess() {
+    setSaleData(null);
     clearCart();
-    setToastMessage(
-      method === "efectivo" && change > 0
-        ? `Pago confirmado · Vuelto S/ ${change.toFixed(2)}`
-        : "Pago confirmado",
-    );
+    setOrderNumber((n) => n + 1);
   }
 
   return (
@@ -37,7 +55,7 @@ export function OrderPanel() {
       <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
         <h2 className="text-base font-semibold text-foreground">Orden actual</h2>
         <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
-          #0049
+          #{String(orderNumber).padStart(4, "0")}
         </span>
       </div>
 
@@ -134,11 +152,10 @@ export function OrderPanel() {
         onClose={() => setIsCheckoutOpen(false)}
       />
 
-      <Toast
-        open={toastMessage !== ""}
-        variant="success"
-        message={toastMessage}
-        onClose={() => setToastMessage("")}
+      <SaleSuccessModal
+        open={saleData !== null}
+        data={saleData}
+        onClose={handleCloseSuccess}
       />
     </div>
   );

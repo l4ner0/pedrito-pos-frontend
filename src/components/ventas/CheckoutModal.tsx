@@ -22,13 +22,11 @@ interface CheckoutModalProps {
 export function CheckoutModal({ open, total, persistent = true, onConfirm, onClose }: CheckoutModalProps) {
   const [method, setMethod] = useState<PaymentMethod>("efectivo");
   const [received, setReceived] = useState("");
-  const [printReceipt, setPrintReceipt] = useState(true);
 
   useEffect(() => {
     if (open) {
       setMethod("efectivo");
       setReceived("");
-      setPrintReceipt(true);
     }
   }, [open]);
 
@@ -132,17 +130,6 @@ export function CheckoutModal({ open, total, persistent = true, onConfirm, onClo
             <p className="text-sm text-muted-foreground">Amelia Torres Quispe</p>
           </div>
         )}
-
-        {/* Print receipt */}
-        <label className="mb-5 flex cursor-pointer items-center gap-2.5">
-          <input
-            type="checkbox"
-            checked={printReceipt}
-            onChange={(e) => setPrintReceipt(e.target.checked)}
-            className="h-4 w-4 cursor-pointer accent-primary"
-          />
-          <span className="text-sm text-muted-foreground">Imprimir boleta</span>
-        </label>
 
         {/* Actions */}
         <div className="flex gap-3">
