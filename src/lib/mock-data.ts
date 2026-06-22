@@ -158,3 +158,48 @@ const dataByPeriod: Record<string, DashboardData> = {
 export function getDashboardData(period: string): DashboardData {
   return dataByPeriod[period] ?? dataByPeriod.today;
 }
+
+export type SaleMethod = "Efectivo" | "Tarjeta" | "Yape";
+
+export interface Sale {
+  id: string;
+  datetime: string;
+  products: string;
+  method: SaleMethod;
+  total: number;
+}
+
+const todaySales: Sale[] = [
+  { id: "#0047", datetime: "20/06/2024 10:32", products: "Coca-Cola 500ml, Doritos Nacho 40g",                 method: "Efectivo", total: 9.50  },
+  { id: "#0046", datetime: "20/06/2024 10:18", products: "Leche Gloria 1L",                                    method: "Tarjeta",  total: 9.60  },
+  { id: "#0045", datetime: "20/06/2024 09:55", products: "Pan de Molde Bimbo, Inca Kola 1.5L, Yogurt Toni 200g", method: "Efectivo", total: 19.10 },
+  { id: "#0044", datetime: "20/06/2024 09:41", products: "Pringles Original, Agua San Luis 625ml",             method: "Yape",     total: 9.50  },
+  { id: "#0043", datetime: "20/06/2024 09:22", products: "Inca Kola 1.5L",                                     method: "Efectivo", total: 3.80  },
+  { id: "#0042", datetime: "20/06/2024 09:05", products: "Detergente Ariel 500g, Jabón Bolívar 200g",          method: "Tarjeta",  total: 16.65 },
+];
+
+const weekSales: Sale[] = [
+  ...todaySales,
+  { id: "#0041", datetime: "19/06/2024 18:47", products: "Yogurt Toni 200g, Coca-Cola 500ml",                  method: "Tarjeta",  total: 22.30 },
+  { id: "#0040", datetime: "19/06/2024 17:30", products: "Manzana Roja kg",                                    method: "Efectivo", total: 7.50  },
+  { id: "#0039", datetime: "19/06/2024 16:12", products: "Inca Kola 1.5L, Pan de Molde Bimbo",                 method: "Yape",     total: 14.90 },
+  { id: "#0038", datetime: "19/06/2024 15:05", products: "Agua San Luis 625ml, Croissant Mantequilla",         method: "Efectivo", total: 5.20  },
+  { id: "#0037", datetime: "18/06/2024 13:48", products: "Pringles Original, Detergente Ariel 500g",           method: "Tarjeta",  total: 31.00 },
+  { id: "#0036", datetime: "18/06/2024 12:20", products: "Coca-Cola 500ml, Doritos Nacho 40g",                 method: "Efectivo", total: 8.75  },
+];
+
+const monthSales: Sale[] = [
+  ...weekSales,
+  { id: "#0035", datetime: "16/06/2024 14:10", products: "Detergente Ariel 500g",                              method: "Yape",     total: 17.80 },
+  { id: "#0034", datetime: "15/06/2024 11:05", products: "Pan de Molde Bimbo, Jabón Bolívar 200g",             method: "Efectivo", total: 8.50  },
+  { id: "#0033", datetime: "14/06/2024 09:33", products: "Leche Gloria 1L, Yogurt Toni 200g",                  method: "Tarjeta",  total: 45.00 },
+  { id: "#0032", datetime: "13/06/2024 16:22", products: "Inca Kola 1.5L, Coca-Cola 500ml",                    method: "Efectivo", total: 12.50 },
+  { id: "#0031", datetime: "12/06/2024 10:15", products: "Croissant Mantequilla, Agua San Luis 625ml",         method: "Yape",     total: 6.00  },
+  { id: "#0030", datetime: "10/06/2024 14:30", products: "Manzana Roja kg, Doritos Nacho 40g",                 method: "Efectivo", total: 9.50  },
+];
+
+export const salesData: Record<"today" | "week" | "month", Sale[]> = {
+  today: todaySales,
+  week:  weekSales,
+  month: monthSales,
+};
