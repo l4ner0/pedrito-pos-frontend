@@ -7,7 +7,7 @@ import { UserMenu } from "./UserMenu";
 const TITLE_BY_PATH: Record<string, string> = {
   "/dashboard":     "Dashboard",
   "/inventario":    "Inventario",
-  "/ventas":        "Ventas",
+  "/ventas":        "Punto de Venta",
   "/configuracion": "Configuración",
 };
 

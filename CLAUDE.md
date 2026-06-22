@@ -9,9 +9,11 @@ pnpm dev        # start dev server on http://localhost:3000
 pnpm build      # production build
 pnpm start      # run production build
 pnpm lint       # run ESLint
+pnpm test       # run Vitest (unit tests)
+pnpm test:ui    # run Vitest with browser UI
 ```
 
-No test runner is configured yet.
+Tests use **Vitest** + **@testing-library/react** + jsdom. Config in `vitest.config.ts`. Setup file at `src/test/setup.ts` (imports `@testing-library/jest-dom`). Test files are co-located next to the component as `ComponentName.test.tsx`.
 
 ## Stack
 
@@ -34,36 +36,63 @@ No test runner is configured yet.
 ```
 src/
 ├── app/
-│   ├── (auth)/login/           # Login page — no sidebar
-│   ├── (dashboard)/            # Protected routes — all share DashboardShell
-│   │   └── dashboard/          # /dashboard — KPI cards, chart, transactions
+│   ├── (public)/login/         # Login page — no sidebar
+│   ├── (protected)/            # Protected routes — all share DashboardShell
+│   │   ├── dashboard/          # /dashboard — KPI cards, chart, transactions
+│   │   └── inventario/         # /inventario — product table with CRUD modals
 │   ├── layout.tsx              # Root layout — loads Inter font, globals.css
 │   ├── page.tsx                # Redirects → /login
 │   └── globals.css             # Tailwind v4 @theme tokens + shadcn CSS vars
 ├── components/
-│   ├── ui/                     # shadcn/ui primitives — do not edit directly
-│   │   └── status-alert.tsx    # Custom alert (not shadcn) — exception to rule above
+│   ├── ui/                     # Atomic components — shadcn primitives + custom
+│   │   ├── Badge.tsx           # Status/category badge
+│   │   ├── KPICard.tsx         # Dashboard metric card
+│   │   ├── PeriodFilter.tsx    # Period dropdown (Hoy / Ayer / Hace una semana)
+│   │   ├── ProductAvatar.tsx   # Product image or category-icon fallback
+│   │   ├── ConfirmModal.tsx    # Reusable destructive-action dialog
+│   │   ├── Toast.tsx           # Temporary success/error notification
+│   │   └── status-alert.tsx    # Custom alert (not shadcn)
 │   ├── auth/                   # Auth-specific components (LoginForm)
 │   ├── layout/
-│   │   ├── DashboardShell.tsx  # Owns sidebar collapse state; wraps Sidebar + <main>
+│   │   ├── DashboardShell.tsx  # Owns sidebar collapse state; wraps Sidebar + Topbar + <main>
 │   │   ├── Sidebar.tsx         # Fixed sidebar with collapsible nav
+│   │   ├── Topbar.tsx          # Top header with page title + UserMenu + bell icon
 │   │   └── UserMenu.tsx        # Avatar dropdown (Perfil / Configuración / Cerrar sesión)
-│   └── dashboard/
-│       └── PeriodFilter.tsx    # Period dropdown (Hoy / Ayer / Hace una semana)
+│   ├── dashboard/
+│   │   ├── DashboardFilters.tsx
+│   │   ├── SalesChart.tsx
+│   │   └── RecentTransactions.tsx
+│   └── inventory/
+│       ├── InventoryContent.tsx  # Client orchestrator — owns modal + toast state
+│       ├── InventoryFilters.tsx  # Search input + category tabs + "Agregar" button
+│       ├── ProductTable.tsx      # Product rows with edit/delete actions
+│       ├── ProductFormModal.tsx  # Add/edit product form in a dialog
+│       └── RowActions.tsx        # Per-row edit and delete icon buttons
 └── lib/
     ├── utils.ts                # cn() helper (clsx + tailwind-merge)
-    └── mock-data.ts            # weeklyData, recentTransactions, lowStockProducts
+    └── mock-data.ts            # All mock data + types (Product, KpiData, etc.)
 ```
 
-**Still planned:** `hooks/`, `store/` (Zustand), `types/`, and routes for `ventas/`, `inventario/`, `configuracion/`.
+**Still planned:** `hooks/`, `store/` (Zustand), `types/`, and routes for `ventas/`, `configuracion/`.
 
-Route groups: `(auth)` renders without sidebar; `(dashboard)` wraps all protected routes in `DashboardShell`. No real backend — all data comes from `lib/mock-data.ts`.
+Route groups: `(public)` renders without sidebar; `(protected)` wraps all protected routes in `DashboardShell`. No real backend — all data comes from `lib/mock-data.ts`.
 
 ### Sidebar collapse
 
-`DashboardShell` holds the `collapsed` boolean state and passes it to `Sidebar`. On mount it auto-collapses when `window.innerWidth < 1024`. Width is set via inline style: `4rem` collapsed, `13rem` expanded — `<main>` matches with a `marginLeft` transition. There are no static Tailwind breakpoint classes for this; it is entirely JS-driven.
+`DashboardShell` initializes `collapsed` from `window.innerWidth < 1024` and syncs it with a `matchMedia` listener (no SSR). Width is set via inline style: `4rem` collapsed, `13rem` expanded — `<main>` matches with a `marginLeft` transition. No static Tailwind breakpoint classes are used; this is entirely JS-driven.
 
 Custom dropdowns (`UserMenu`, `PeriodFilter`) follow the same pattern: local `open` state + `useEffect` to close on outside click.
+
+### Inventory CRUD pattern
+
+The inventory page is split into a Server Component (`inventario/page.tsx`) that filters `products` from `mock-data.ts` via URL search params, and a Client Component (`InventoryContent`) that owns all modal/toast state. When Zustand or a real API is added, `InventoryContent` is the integration point.
+
+### Mock data
+
+`lib/mock-data.ts` exports:
+- `Product` interface + `ProductCategory` union type
+- `products` array (12 items) + `LOW_STOCK_THRESHOLD = 8`
+- `getDashboardData(period)` — returns `DashboardData` keyed by `"today" | "yesterday" | "week"`
 
 ## Design system
 
