@@ -100,6 +100,25 @@ export function CheckoutModal({ open, total, onConfirm, onClose }: CheckoutModal
           </div>
         )}
 
+        {/* Yape QR */}
+        {method === "yape" && (
+          <div className="mb-5 flex flex-col items-center gap-3">
+            <div
+              className="flex h-44 w-44 items-center justify-center rounded-xl border border-border"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(45deg, #e2e5ea 0px, #e2e5ea 1px, #f5f6f8 1px, #f5f6f8 10px)",
+              }}
+            >
+              <span className="rounded-md bg-card/80 px-2 py-1 text-xs text-muted-foreground">
+                [ QR Yape ]
+              </span>
+            </div>
+            <p className="text-lg font-bold tracking-[0.2em] text-foreground">987 654 321</p>
+            <p className="text-sm text-muted-foreground">Amelia Torres Quispe</p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-3">
           <button
