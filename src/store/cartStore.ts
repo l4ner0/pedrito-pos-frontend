@@ -8,17 +8,17 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
-  discountPercent: number | null;
+  discountAmount: number | null;
   addItem: (product: Product) => void;
   removeItem: (productId: string) => void;
   updateQuantity: (productId: string, qty: number) => void;
   clearCart: () => void;
-  setDiscount: (percent: number | null) => void;
+  setDiscount: (amount: number | null) => void;
 }
 
 export const useCartStore = create<CartStore>((set) => ({
   items: [],
-  discountPercent: null,
+  discountAmount: null,
 
   addItem: (product) =>
     set((state) => {
@@ -50,7 +50,7 @@ export const useCartStore = create<CartStore>((set) => ({
             ),
     })),
 
-  clearCart: () => set({ items: [], discountPercent: null }),
+  clearCart: () => set({ items: [], discountAmount: null }),
 
-  setDiscount: (percent) => set({ discountPercent: percent }),
+  setDiscount: (amount) => set({ discountAmount: amount }),
 }));

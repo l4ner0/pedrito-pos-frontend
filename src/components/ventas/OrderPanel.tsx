@@ -6,12 +6,12 @@ import { DiscountSelector } from "./DiscountSelector";
 import { cn } from "@/lib/utils";
 
 export function OrderPanel() {
-  const { items, discountPercent, addItem, removeItem, updateQuantity, clearCart, setDiscount } =
+  const { items, discountAmount, addItem, removeItem, updateQuantity, clearCart, setDiscount } =
     useCartStore();
 
   const subtotal = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
-  const discountAmount = discountPercent ? subtotal * (discountPercent / 100) : 0;
-  const total = subtotal - discountAmount;
+  const discount = Math.min(discountAmount ?? 0, subtotal);
+  const total = subtotal - discount;
   const isEmpty = items.length === 0;
 
   return (
@@ -79,7 +79,7 @@ export function OrderPanel() {
 
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Descuento</span>
-          <DiscountSelector value={discountPercent} onChange={setDiscount} />
+          <DiscountSelector value={discountAmount} onChange={setDiscount} />
         </div>
 
         <div className="flex items-center justify-between">
