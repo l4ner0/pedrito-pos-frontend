@@ -99,6 +99,14 @@ export function CheckoutModal({ open, total, onConfirm, onClose }: CheckoutModal
               placeholder="0.00"
               className="w-full rounded-xl border border-border bg-secondary px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
+            {receivedNum > 0 && (
+              <div className="mt-2 flex items-center justify-between px-1">
+                <span className="text-xs text-muted-foreground">Vuelto</span>
+                <span className={cn("text-sm font-semibold", receivedNum >= total ? "text-success" : "text-danger")}>
+                  S/ {Math.max(receivedNum - total, 0).toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
         )}
 
