@@ -1,11 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { DiscountSelector } from "./DiscountSelector";
+import { CheckoutModal, type PaymentMethod } from "./CheckoutModal";
+import { Toast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 
 export function OrderPanel() {
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+
   const { items, discountAmount, addItem, removeItem, updateQuantity, clearCart, setDiscount } =
     useCartStore();
 
@@ -13,6 +19,17 @@ export function OrderPanel() {
   const discount = Math.min(discountAmount ?? 0, subtotal);
   const total = subtotal - discount;
   const isEmpty = items.length === 0;
+
+  function handleConfirm(method: PaymentMethod, received: number) {
+    const change = method === "efectivo" ? received - total : 0;
+    setIsCheckoutOpen(false);
+    clearCart();
+    setToastMessage(
+      method === "efectivo" && change > 0
+        ? `Pago confirmado · Vuelto S/ ${change.toFixed(2)}`
+        : "Pago confirmado",
+    );
+  }
 
   return (
     <div className="flex h-full flex-col border-r border-border bg-card">
@@ -89,6 +106,7 @@ export function OrderPanel() {
 
         <button
           disabled={isEmpty}
+          onClick={() => setIsCheckoutOpen(true)}
           className={cn(
             "w-full rounded-xl py-3 text-sm font-semibold transition-colors",
             isEmpty
@@ -108,6 +126,20 @@ export function OrderPanel() {
           </button>
         )}
       </div>
+
+      <CheckoutModal
+        open={isCheckoutOpen}
+        total={total}
+        onConfirm={handleConfirm}
+        onClose={() => setIsCheckoutOpen(false)}
+      />
+
+      <Toast
+        open={toastMessage !== ""}
+        variant="success"
+        message={toastMessage}
+        onClose={() => setToastMessage("")}
+      />
     </div>
   );
 }
