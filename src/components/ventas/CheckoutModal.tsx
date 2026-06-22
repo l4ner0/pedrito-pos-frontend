@@ -14,11 +14,12 @@ const METHODS: { id: PaymentMethod; label: string; icon: React.ElementType }[] =
 interface CheckoutModalProps {
   open: boolean;
   total: number;
+  persistent?: boolean;
   onConfirm: (method: PaymentMethod, received: number) => void;
   onClose: () => void;
 }
 
-export function CheckoutModal({ open, total, onConfirm, onClose }: CheckoutModalProps) {
+export function CheckoutModal({ open, total, persistent = true, onConfirm, onClose }: CheckoutModalProps) {
   const [method, setMethod] = useState<PaymentMethod>("efectivo");
   const [received, setReceived] = useState("");
   const [printReceipt, setPrintReceipt] = useState(true);
@@ -41,8 +42,11 @@ export function CheckoutModal({ open, total, onConfirm, onClose }: CheckoutModal
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      onClick={persistent ? undefined : onClose}
+    >
+      <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">Cobrar venta</h2>

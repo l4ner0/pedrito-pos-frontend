@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { Search, DollarSign, ClipboardList, Info } from "lucide-react";
-import { salesData, type SaleMethod } from "@/lib/mock-data";
+import { salesData, type Sale, type SaleMethod } from "@/lib/mock-data";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
+import { SaleDetailModal } from "./SaleDetailModal";
 import { cn } from "@/lib/utils";
 
 type Period = "today" | "week" | "month";
@@ -23,6 +24,7 @@ const METHOD_VARIANT: Record<SaleMethod, BadgeVariant> = {
 export function ListadoDeVentas() {
   const [period, setPeriod] = useState<Period>("today");
   const [search, setSearch] = useState("");
+  const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
 
   const allSales = salesData[period];
 
@@ -125,7 +127,11 @@ export function ListadoDeVentas() {
             </thead>
             <tbody className="divide-y divide-border">
               {filtered.map((sale) => (
-                <tr key={sale.id} className="transition-colors hover:bg-secondary/50">
+                <tr
+                  key={sale.id}
+                  onClick={() => setSelectedSale(sale)}
+                  className="cursor-pointer transition-colors hover:bg-secondary/50"
+                >
                   <td className="px-5 py-3.5 font-medium text-foreground">{sale.id}</td>
                   <td className="px-5 py-3.5 text-muted-foreground">{sale.datetime}</td>
                   <td className="max-w-[280px] truncate px-5 py-3.5 text-foreground">
@@ -138,7 +144,10 @@ export function ListadoDeVentas() {
                     S/ {sale.total.toFixed(2)}
                   </td>
                   <td className="px-3 py-3.5">
-                    <button className="text-muted-foreground transition-colors hover:text-foreground">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelectedSale(sale); }}
+                      className="text-muted-foreground transition-colors hover:text-foreground"
+                    >
                       <Info size={16} />
                     </button>
                   </td>
@@ -154,6 +163,8 @@ export function ListadoDeVentas() {
           )}
         </div>
       </div>
+
+      <SaleDetailModal sale={selectedSale} onClose={() => setSelectedSale(null)} />
     </div>
   );
 }

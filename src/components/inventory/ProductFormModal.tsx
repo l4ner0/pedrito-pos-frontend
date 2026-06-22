@@ -36,11 +36,12 @@ const CATEGORY_SELECT_OPTIONS = CATEGORY_OPTIONS.filter((o) => o.value !== "todo
 interface ProductFormModalProps {
   open: boolean;
   product: Product | null;
+  persistent?: boolean;
   onClose: () => void;
   onSuccess: (isEdit: boolean) => void;
 }
 
-export function ProductFormModal({ open, product, onClose, onSuccess }: ProductFormModalProps) {
+export function ProductFormModal({ open, product, persistent = true, onClose, onSuccess }: ProductFormModalProps) {
   const [form, setForm] = useState<FormValues>(EMPTY_FORM);
 
   useEffect(() => {
@@ -62,7 +63,7 @@ export function ProductFormModal({ open, product, onClose, onSuccess }: ProductF
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={persistent ? undefined : onClose}
     >
       <div className="relative w-full max-w-md rounded-2xl bg-card p-6 shadow-xl">
         <div className="mb-5 flex items-center justify-between">
