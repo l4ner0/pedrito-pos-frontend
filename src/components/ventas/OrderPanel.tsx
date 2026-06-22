@@ -52,11 +52,8 @@ export function OrderPanel() {
   return (
     <div className="flex h-full flex-col border-r border-border bg-card">
       {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-border px-6 py-4">
+      <div className="flex shrink-0 items-center border-b border-border px-6 py-4">
         <h2 className="text-base font-semibold text-foreground">Orden actual</h2>
-        <span className="rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-muted-foreground">
-          #{String(orderNumber).padStart(4, "0")}
-        </span>
       </div>
 
       {/* Items list */}
