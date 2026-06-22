@@ -26,6 +26,15 @@ export function ConfiguracionContent() {
     numero: "987 654 321",
     titular: "Amelia Torres Quispe",
   });
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarPreview(URL.createObjectURL(file));
+  }
+
   const [qrPreview, setQrPreview] = useState<string | null>(null);
   const qrInputRef = useRef<HTMLInputElement>(null);
 
@@ -67,11 +76,23 @@ export function ConfiguracionContent() {
 
             <div className="mb-6 flex items-center gap-4">
               <div className="relative shrink-0">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand">
-                  <span className="text-lg font-semibold text-white">{initials}</span>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-brand">
+                  {avatarPreview ? (
+                    <img src={avatarPreview} alt="Foto de perfil" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-lg font-semibold text-white">{initials}</span>
+                  )}
                 </div>
                 <button
                   type="button"
+                  onClick={() => avatarInputRef.current?.click()}
                   className="absolute bottom-0 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-sm transition-colors hover:bg-primary/90"
                 >
                   <Camera size={12} />

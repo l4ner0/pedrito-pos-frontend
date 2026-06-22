@@ -8,23 +8,11 @@ export type ToastVariant = "success" | "warning" | "error";
 
 const VARIANT_CONFIG: Record<
   ToastVariant,
-  { icon: LucideIcon; bg: string; textClass: string }
+  { icon: LucideIcon; bg: string }
 > = {
-  success: {
-    icon: CheckCircle,
-    bg: "bg-success/20",
-    textClass: "text-success",
-  },
-  warning: {
-    icon: AlertTriangle,
-    bg: "bg-warning/20",
-    textClass: "text-warning",
-  },
-  error: {
-    icon: AlertCircle,
-    bg: "bg-danger/20",
-    textClass: "text-danger",
-  },
+  success: { icon: CheckCircle,   bg: "bg-success" },
+  warning: { icon: AlertTriangle, bg: "bg-warning" },
+  error:   { icon: AlertCircle,   bg: "bg-danger"  },
 };
 
 interface ToastProps {
@@ -50,21 +38,19 @@ export function Toast({
 
   if (!open) return null;
 
-  const { icon: Icon, bg, textClass } = VARIANT_CONFIG[variant];
+  const { icon: Icon, bg } = VARIANT_CONFIG[variant];
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
-      <div
-        className={`flex items-center gap-3 rounded-xl px-5 py-3 shadow-sm ${bg}`}
-      >
-        <Icon size={17} className={textClass} />
-        <span className={`text-sm font-medium ${textClass}`}>{message}</span>
+    <div className="fixed right-6 top-6 z-50">
+      <div className={`flex min-w-72 items-center gap-3 rounded-xl px-5 py-3.5 shadow-lg ${bg}`}>
+        <Icon size={18} className="shrink-0 text-white" />
+        <span className="flex-1 text-sm font-semibold text-white">{message}</span>
         <button
           type="button"
           onClick={onClose}
-          className={`ml-1 rounded-full p-0.5 transition-colors hover:bg-black/5 ${textClass}`}
+          className="ml-1 rounded-full p-0.5 text-white/70 transition-colors hover:text-white"
         >
-          <X size={14} />
+          <X size={15} />
         </button>
       </div>
     </div>
