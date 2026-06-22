@@ -11,6 +11,7 @@ pnpm start      # run production build
 pnpm lint       # run ESLint
 pnpm test       # run Vitest (unit tests)
 pnpm test:ui    # run Vitest with browser UI
+pnpm test -- Badge   # run tests matching a pattern (filter by filename or test name)
 ```
 
 Tests use **Vitest** + **@testing-library/react** + jsdom. Config in `vitest.config.ts`. Setup file at `src/test/setup.ts` (imports `@testing-library/jest-dom`). Test files are co-located next to the component as `ComponentName.test.tsx`.
@@ -23,7 +24,7 @@ Tests use **Vitest** + **@testing-library/react** + jsdom. Config in `vitest.con
 - **Tailwind CSS v4** — CSS-first configuration; no `tailwind.config.ts`. All design tokens are defined in `src/app/globals.css` via `@theme inline`.
 - **shadcn/ui** — base components installed in `src/components/ui/` (do not modify these files directly; extend via wrapper components). Integrated via `@import "shadcn/tailwind.css"` in `globals.css`.
 - **@base-ui/react** — installed as an alternative primitive library if needed
-- **Zustand** — global state (planned for cart and session; not yet implemented)
+- **Zustand** — global state; cart store implemented at `src/store/cartStore.ts`
 - **lucide-react** — icon library
 - **pnpm** as the package manager
 
@@ -39,41 +40,26 @@ src/
 │   ├── (public)/login/         # Login page — no sidebar
 │   ├── (protected)/            # Protected routes — all share DashboardShell
 │   │   ├── dashboard/          # /dashboard — KPI cards, chart, transactions
-│   │   └── inventario/         # /inventario — product table with CRUD modals
+│   │   ├── inventario/         # /inventario — product table with CRUD modals
+│   │   ├── ventas/             # /ventas — POS and sales history (two tabs)
+│   │   └── configuracion/      # /configuracion — user/business settings form
 │   ├── layout.tsx              # Root layout — loads Inter font, globals.css
 │   ├── page.tsx                # Redirects → /login
 │   └── globals.css             # Tailwind v4 @theme tokens + shadcn CSS vars
 ├── components/
 │   ├── ui/                     # Atomic components — shadcn primitives + custom
-│   │   ├── Badge.tsx           # Status/category badge
-│   │   ├── KPICard.tsx         # Dashboard metric card
-│   │   ├── PeriodFilter.tsx    # Period dropdown (Hoy / Ayer / Hace una semana)
-│   │   ├── ProductAvatar.tsx   # Product image or category-icon fallback
-│   │   ├── ConfirmModal.tsx    # Reusable destructive-action dialog
-│   │   ├── Toast.tsx           # Temporary success/error notification
-│   │   └── status-alert.tsx    # Custom alert (not shadcn)
-│   ├── auth/                   # Auth-specific components (LoginForm)
-│   ├── layout/
-│   │   ├── DashboardShell.tsx  # Owns sidebar collapse state; wraps Sidebar + Topbar + <main>
-│   │   ├── Sidebar.tsx         # Fixed sidebar with collapsible nav
-│   │   ├── Topbar.tsx          # Top header with page title + UserMenu + bell icon
-│   │   └── UserMenu.tsx        # Avatar dropdown (Perfil / Configuración / Cerrar sesión)
-│   ├── dashboard/
-│   │   ├── DashboardFilters.tsx
-│   │   ├── SalesChart.tsx
-│   │   └── RecentTransactions.tsx
-│   └── inventory/
-│       ├── InventoryContent.tsx  # Client orchestrator — owns modal + toast state
-│       ├── InventoryFilters.tsx  # Search input + category tabs + "Agregar" button
-│       ├── ProductTable.tsx      # Product rows with edit/delete actions
-│       ├── ProductFormModal.tsx  # Add/edit product form in a dialog
-│       └── RowActions.tsx        # Per-row edit and delete icon buttons
+│   ├── auth/                   # LoginForm
+│   ├── layout/                 # DashboardShell, Sidebar, Topbar, UserMenu
+│   ├── dashboard/              # DashboardFilters, SalesChart, RecentTransactions
+│   ├── inventory/              # InventoryContent, ProductTable, ProductFormModal, etc.
+│   ├── ventas/                 # VentasContent, PuntoDeVenta, OrderPanel, etc.
+│   └── configuracion/          # ConfiguracionContent
+├── store/
+│   └── cartStore.ts            # Zustand cart store
 └── lib/
     ├── utils.ts                # cn() helper (clsx + tailwind-merge)
-    └── mock-data.ts            # All mock data + types (Product, KpiData, etc.)
+    └── mock-data.ts            # All mock data + types
 ```
-
-**Still planned:** `hooks/`, `store/` (Zustand), `types/`, and routes for `ventas/`, `configuracion/`.
 
 Route groups: `(public)` renders without sidebar; `(protected)` wraps all protected routes in `DashboardShell`. No real backend — all data comes from `lib/mock-data.ts`.
 
@@ -85,14 +71,30 @@ Custom dropdowns (`UserMenu`, `PeriodFilter`) follow the same pattern: local `op
 
 ### Inventory CRUD pattern
 
-The inventory page is split into a Server Component (`inventario/page.tsx`) that filters `products` from `mock-data.ts` via URL search params, and a Client Component (`InventoryContent`) that owns all modal/toast state. When Zustand or a real API is added, `InventoryContent` is the integration point.
+The inventory page is split into a Server Component (`inventario/page.tsx`) that filters `products` from `mock-data.ts` via URL search params, and a Client Component (`InventoryContent`) that owns all modal/toast state. When a real API is added, `InventoryContent` is the integration point.
+
+### Ventas / POS architecture
+
+`ventas/page.tsx` is a Server Component that passes the full `products` array to `VentasContent` (client). `VentasContent` toggles between two tabs:
+
+- **Punto de Venta**: two-panel layout — `OrderPanel` (fixed 420px left) + `ProductCatalog` (flex-1 right). Adding a product calls `useCartStore().addItem()`.
+- **Listado de ventas**: `ListadoDeVentas` shows sales from `salesData` with a `SaleDetailModal` for per-row detail.
+
+Cart state lives in `src/store/cartStore.ts` (`useCartStore`): items, discountAmount, and actions (addItem / removeItem / updateQuantity / clearCart / setDiscount). `OrderPanel` owns the `CheckoutModal` and the post-payment toast.
+
+`CheckoutModal` supports two payment methods: **Efectivo** (shows received amount + change) and **Yape** (shows QR placeholder). It resets its own state on open via `useEffect([open])`.
+
+### Configuracion
+
+`ConfiguracionContent` is a pure client-side form with local state (no Zustand, no persistence). Sections: user profile (with avatar file upload), business info, payment methods (Yape number + QR image upload), and print settings.
 
 ### Mock data
 
 `lib/mock-data.ts` exports:
-- `Product` interface + `ProductCategory` union type
-- `products` array (12 items) + `LOW_STOCK_THRESHOLD = 8`
+- `Product` interface + `ProductCategory` union type + `products` array (12 items) + `LOW_STOCK_THRESHOLD = 8`
 - `getDashboardData(period)` — returns `DashboardData` keyed by `"today" | "yesterday" | "week"`
+- `Sale` interface + `SaleItem` + `SaleMethod` union (`"Efectivo" | "Tarjeta" | "Yape"`)
+- `salesData` — `Record<"today" | "week" | "month", Sale[]>` (cumulative: week includes today, month includes week)
 
 ## Design system
 
@@ -131,7 +133,7 @@ Note: `--destructive` (shadcn) and `--danger` (custom) both map to `#C45B5B`. Us
 
 ## Atomic components
 
-When implementing new features, always extract reusable UI elements as atomic components under `src/components/ui/`. A component is atomic if it can be used in more than one context (badges, avatars, inputs, specialized buttons, etc.). Section-specific components live in their own folder (`inventory/`, `dashboard/`, etc.).
+When implementing new features, always extract reusable UI elements as atomic components under `src/components/ui/`. A component is atomic if it can be used in more than one context (badges, avatars, inputs, specialized buttons, etc.). Section-specific components live in their own folder (`inventory/`, `ventas/`, etc.).
 
 ## Language
 
