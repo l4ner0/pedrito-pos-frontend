@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { type Product } from "@/lib/mock-data";
 import { CATEGORY_OPTIONS } from "./InventoryFilters";
+import { Combobox } from "@/components/ui/Combobox";
 
 type FormValues = {
   name: string;
@@ -31,11 +32,7 @@ function productToForm(p: Product): FormValues {
   };
 }
 
-const CATEGORY_SELECT_OPTIONS = CATEGORY_OPTIONS.filter((o) => o.value !== "todos");
-
-function getCategoryLabel(value: string): string {
-  return CATEGORY_SELECT_OPTIONS.find((o) => o.value === value)?.label ?? value;
-}
+const CATEGORY_OPTIONS_FILTERED = CATEGORY_OPTIONS.filter((o) => o.value !== "todos");
 
 interface ProductFormModalProps {
   open: boolean;
@@ -48,26 +45,10 @@ interface ProductFormModalProps {
 
 export function ProductFormModal({ open, product, persistent = true, onClose, onSuccess, onNewCategory }: ProductFormModalProps) {
   const [form, setForm] = useState<FormValues>(EMPTY_FORM);
-  const [comboInput, setComboInput] = useState("");
-  const [comboOpen, setComboOpen] = useState(false);
-  const comboRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const values = product ? productToForm(product) : EMPTY_FORM;
-    setForm(values);
-    setComboInput(getCategoryLabel(values.category));
-    setComboOpen(false);
+    setForm(product ? productToForm(product) : EMPTY_FORM);
   }, [product, open]);
-
-  useEffect(() => {
-    function handleOutsideClick(e: MouseEvent) {
-      if (comboRef.current && !comboRef.current.contains(e.target as Node)) {
-        setComboOpen(false);
-      }
-    }
-    if (comboOpen) document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, [comboOpen]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -78,15 +59,6 @@ export function ProductFormModal({ open, product, persistent = true, onClose, on
   if (!open) return null;
 
   const isEdit = product !== null;
-
-  const filteredOptions = CATEGORY_SELECT_OPTIONS.filter((o) =>
-    o.label.toLowerCase().includes(comboInput.toLowerCase()),
-  );
-  const showNewOption =
-    comboInput.trim() !== "" &&
-    !CATEGORY_SELECT_OPTIONS.some(
-      (o) => o.label.toLowerCase() === comboInput.trim().toLowerCase(),
-    );
 
   return (
     <div
@@ -173,57 +145,14 @@ export function ProductFormModal({ open, product, persistent = true, onClose, on
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Categoría
             </label>
-            <div ref={comboRef} className="relative">
-              <input
-                type="text"
-                value={comboInput}
-                onChange={(e) => {
-                  setComboInput(e.target.value);
-                  setForm((f) => ({ ...f, category: e.target.value }));
-                  setComboOpen(true);
-                }}
-                onFocus={() => setComboOpen(true)}
-                placeholder="Buscar o escribir categoría..."
-                className="w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-              {comboOpen && (filteredOptions.length > 0 || showNewOption) && (
-                <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
-                  {filteredOptions.length > 0 && (
-                    <ul>
-                      {filteredOptions.map((o) => (
-                        <li key={o.value}>
-                          <button
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setForm((f) => ({ ...f, category: o.value }));
-                              setComboInput(o.label);
-                              setComboOpen(false);
-                            }}
-                            className="w-full px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-secondary"
-                          >
-                            {o.label}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {showNewOption && (
-                    <button
-                      type="button"
-                      onMouseDown={(e) => {
-                        e.preventDefault();
-                        onNewCategory?.(comboInput.trim());
-                        setComboOpen(false);
-                      }}
-                      className={`w-full px-4 py-2.5 text-left text-sm font-medium text-primary transition-colors hover:bg-primary/5${filteredOptions.length > 0 ? " border-t border-border" : ""}`}
-                    >
-                      {`+ Nueva categoría: "${comboInput.trim()}"`}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+            <Combobox
+              options={CATEGORY_OPTIONS_FILTERED}
+              value={form.category}
+              onChange={(v) => setForm((f) => ({ ...f, category: v }))}
+              onCreateNew={onNewCategory}
+              createNewLabel={(input) => `+ Nueva categoría: "${input}"`}
+              placeholder="Buscar o escribir categoría..."
+            />
           </div>
 
           <div className="flex gap-3 pt-2">
