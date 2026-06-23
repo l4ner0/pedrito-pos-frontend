@@ -43,9 +43,10 @@ interface ProductFormModalProps {
   persistent?: boolean;
   onClose: () => void;
   onSuccess: (isEdit: boolean) => void;
+  onNewCategory?: (name: string) => void;
 }
 
-export function ProductFormModal({ open, product, persistent = true, onClose, onSuccess }: ProductFormModalProps) {
+export function ProductFormModal({ open, product, persistent = true, onClose, onSuccess, onNewCategory }: ProductFormModalProps) {
   const [form, setForm] = useState<FormValues>(EMPTY_FORM);
   const [comboInput, setComboInput] = useState("");
   const [comboOpen, setComboOpen] = useState(false);
@@ -81,6 +82,11 @@ export function ProductFormModal({ open, product, persistent = true, onClose, on
   const filteredOptions = CATEGORY_SELECT_OPTIONS.filter((o) =>
     o.label.toLowerCase().includes(comboInput.toLowerCase()),
   );
+  const showNewOption =
+    comboInput.trim() !== "" &&
+    !CATEGORY_SELECT_OPTIONS.some(
+      (o) => o.label.toLowerCase() === comboInput.trim().toLowerCase(),
+    );
 
   return (
     <div
@@ -180,7 +186,7 @@ export function ProductFormModal({ open, product, persistent = true, onClose, on
                 placeholder="Buscar o escribir categoría..."
                 className="w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
               />
-              {comboOpen && (
+              {comboOpen && (filteredOptions.length > 0 || showNewOption) && (
                 <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
                   {filteredOptions.length > 0 && (
                     <ul>
@@ -202,16 +208,19 @@ export function ProductFormModal({ open, product, persistent = true, onClose, on
                       ))}
                     </ul>
                   )}
-                  <button
-                    type="button"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      setComboOpen(false);
-                    }}
-                    className="w-full border-t border-border px-4 py-2.5 text-left text-sm font-medium text-primary transition-colors hover:bg-primary/5"
-                  >
-                    {comboInput ? `+ Nueva categoría: "${comboInput}"` : "+ Nueva categoría..."}
-                  </button>
+                  {showNewOption && (
+                    <button
+                      type="button"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        onNewCategory?.(comboInput.trim());
+                        setComboOpen(false);
+                      }}
+                      className={`w-full px-4 py-2.5 text-left text-sm font-medium text-primary transition-colors hover:bg-primary/5${filteredOptions.length > 0 ? " border-t border-border" : ""}`}
+                    >
+                      {`+ Nueva categoría: "${comboInput.trim()}"`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

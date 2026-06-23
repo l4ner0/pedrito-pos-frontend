@@ -36,6 +36,10 @@ export function InventoryContent({ products }: InventoryContentProps) {
     );
   }
 
+  function handleNewCategory(name: string) {
+    setToastMessage(`Categoría "${name}" creada correctamente`);
+  }
+
   function handleDelete() {
     // TODO: conectar con store/API cuando se implemente
     setDeletingProduct(null);
@@ -57,6 +61,7 @@ export function InventoryContent({ products }: InventoryContentProps) {
         product={editingProduct}
         onClose={() => setIsFormOpen(false)}
         onSuccess={handleFormSuccess}
+        onNewCategory={handleNewCategory}
       />
       <ConfirmModal
         open={deletingProduct !== null}
