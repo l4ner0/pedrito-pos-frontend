@@ -22,7 +22,7 @@ Tests use **Vitest** + **@testing-library/react** + jsdom. Config in `vitest.con
 - **React 19**
 - **TypeScript** — strict mode enabled
 - **Tailwind CSS v4** — CSS-first configuration; no `tailwind.config.ts`. All design tokens are defined in `src/app/globals.css` via `@theme inline`.
-- **shadcn/ui** — base components installed in `src/components/ui/` (do not modify these files directly; extend via wrapper components). Integrated via `@import "shadcn/tailwind.css"` in `globals.css`.
+- **shadcn/ui** — primitives (`button.tsx`, `input.tsx`, etc.) installed in `src/components/ui/`. Do not modify shadcn files directly; extend via wrapper components. Custom atomic components also live in the same folder alongside the shadcn primitives. Integrated via `@import "shadcn/tailwind.css"` in `globals.css`.
 - **@base-ui/react** — installed as an alternative primitive library if needed
 - **Zustand** — global state; cart store implemented at `src/store/cartStore.ts`
 - **lucide-react** — icon library
@@ -136,6 +136,14 @@ Note: `--destructive` (shadcn) and `--danger` (custom) both map to `#C45B5B`. Us
 When implementing new features, always extract reusable UI elements as atomic components under `src/components/ui/`. A component is atomic if it can be used in more than one context (badges, avatars, inputs, specialized buttons, etc.). Section-specific components live in their own folder (`inventory/`, `ventas/`, etc.).
 
 **`Combobox`** (`src/components/ui/Combobox.tsx`) — searchable select with optional inline creation. Pass `onCreateNew` to enable a "create new" row when no option matches the typed text; `createNewLabel` customizes the label. Uses the same outside-click-to-close pattern as other custom dropdowns.
+
+**`Toast`** (`src/components/ui/Toast.tsx`) — fixed top-right notification. Props: `open`, `variant` (`"success" | "warning" | "error"`), `message`, `duration` (default 3000 ms), `onClose`. Auto-dismisses via a `setTimeout`; the parent drives open/close state with a message string (`open={message !== ""}`).
+
+**`ConfirmModal`** (`src/components/ui/ConfirmModal.tsx`) — centered dialog for destructive actions. Props: `open`, `variant` (`"success" | "warning" | "error"`), `title`, `description?`, `confirmLabel?`, `cancelLabel?`, `icon?`, `persistent?` (default `true` — blocks backdrop click), `onConfirm`, `onClose`. Each variant ships a default icon; pass `icon` to override.
+
+**`ProductAvatar`** (`src/components/ui/ProductAvatar.tsx`) — product image with a `Package` icon fallback. Sizes: `"sm" | "md" | "lg"`.
+
+**`ProductCard`** (`src/components/ui/ProductCard.tsx`) — POS catalog tile. Disabled (`opacity-50`, non-clickable) when `stock === 0`. Shows warning color and "Stock bajo" label when `0 < stock < LOW_STOCK_THRESHOLD`.
 
 ## Language
 

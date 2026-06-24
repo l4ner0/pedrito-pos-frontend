@@ -6,47 +6,57 @@ import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusAlert } from "@/components/ui/status-alert";
-
-const MOCK_CREDENTIALS = { usuario: "admin", password: "admin123" };
+import { useAuthStore } from "@/store/authStore";
+import { loginApi } from "@/services/authService";
 
 export function LoginForm() {
   const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [usuario, setUsuario] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState(false);
+  const setAuth = useAuthStore((s) => s.setAuth);
 
-  function handleSubmit(e: React.FormEvent) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (
-      usuario === MOCK_CREDENTIALS.usuario &&
-      password === MOCK_CREDENTIALS.password
-    ) {
+    setError(null);
+    setLoading(true);
+
+    try {
+      const data = await loginApi(email.trim(), password);
+      setAuth(data.accessToken, { fullName: data.fullName, role: data.role });
       router.push("/dashboard");
-    } else {
-      setError(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al iniciar sesión");
+    } finally {
+      setLoading(false);
     }
   }
 
-  function handleUsuarioChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setUsuario(e.target.value);
-    if (error) setError(false);
+  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setEmail(e.target.value);
+    if (error) setError(null);
   }
 
   function handlePasswordChange(e: React.ChangeEvent<HTMLInputElement>) {
     setPassword(e.target.value);
-    if (error) setError(false);
+    if (error) setError(null);
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-foreground">Usuario</label>
+        <label className="text-sm font-medium text-foreground">
+          Correo electrónico
+        </label>
         <Input
-          type="text"
-          placeholder="Ingresa tu usuario"
-          value={usuario}
-          onChange={handleUsuarioChange}
+          type="email"
+          placeholder="Ingresa tu correo"
+          value={email}
+          onChange={handleEmailChange}
+          disabled={loading}
         />
       </div>
 
@@ -59,6 +69,7 @@ export function LoginForm() {
           placeholder="Ingresa tu contraseña"
           value={password}
           onChange={handlePasswordChange}
+          disabled={loading}
           endAdornment={
             <button
               type="button"
@@ -72,20 +83,15 @@ export function LoginForm() {
         />
       </div>
 
-      {error && (
-        <StatusAlert
-          variant="error"
-          message="Usuario o contraseña incorrectos."
-        />
-      )}
+      {error && <StatusAlert variant="error" message={error} />}
 
       <Button
         type="submit"
         size="pill"
         className="mt-1"
-        disabled={!usuario.trim() || !password}
+        disabled={!email.trim() || !password || loading}
       >
-        Iniciar sesión
+        {loading ? "Iniciando sesión..." : "Iniciar sesión"}
       </Button>
     </form>
   );
