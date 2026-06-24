@@ -75,9 +75,9 @@ export function Combobox({
         className="w-full rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/30"
       />
       {showDropdown && (
-        <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-border bg-card shadow-lg">
+        <div className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-card shadow-lg">
           {filteredOptions.length > 0 && (
-            <ul>
+            <ul className="max-h-48 overflow-y-auto">
               {filteredOptions.map((o) => (
                 <li key={o.value}>
                   <button

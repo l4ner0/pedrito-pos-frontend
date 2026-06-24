@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { type Product } from "@/lib/mock-data";
-import { fetchCategories } from "@/services/categoryService";
+import { fetchCategories, createCategory } from "@/services/categoryService";
 import { Combobox } from "@/components/ui/Combobox";
 
 type FormValues = {
@@ -62,6 +62,18 @@ export function ProductFormModal({ open, product, persistent = true, onClose, on
       ),
     );
   }, [open]);
+
+  async function handleCreateCategory(name: string) {
+    const created = await createCategory(name);
+    if (!created) return;
+    const newOption = {
+      value: created.name,
+      label: created.name.charAt(0).toUpperCase() + created.name.slice(1),
+    };
+    setCategoryOptions((prev) => [...prev, newOption]);
+    setForm((f) => ({ ...f, category: created.name }));
+    onNewCategory?.(created.name);
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -162,7 +174,7 @@ export function ProductFormModal({ open, product, persistent = true, onClose, on
               options={categoryOptions}
               value={form.category}
               onChange={(v) => setForm((f) => ({ ...f, category: v }))}
-              onCreateNew={onNewCategory}
+              onCreateNew={handleCreateCategory}
               createNewLabel={(input) => `+ Nueva categoría: "${input}"`}
               placeholder="Buscar o escribir categoría..."
             />
