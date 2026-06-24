@@ -14,7 +14,7 @@ export function LoginForm() {
   const setAuth = useAuthStore((s) => s.setAuth);
 
   const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -25,7 +25,7 @@ export function LoginForm() {
     setLoading(true);
 
     try {
-      const data = await loginApi(email.trim(), password);
+      const data = await loginApi(username.trim(), password);
       setAuth(data.accessToken, { fullName: data.fullName, role: data.role });
       router.push("/dashboard");
     } catch (err) {
@@ -35,8 +35,8 @@ export function LoginForm() {
     }
   }
 
-  function handleEmailChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setEmail(e.target.value);
+  function handleUsernameChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setUsername(e.target.value);
     if (error) setError(null);
   }
 
@@ -48,14 +48,12 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div className="flex flex-col gap-1.5">
-        <label className="text-sm font-medium text-foreground">
-          Correo electrónico
-        </label>
+        <label className="text-sm font-medium text-foreground">Usuario</label>
         <Input
-          type="email"
-          placeholder="Ingresa tu correo"
-          value={email}
-          onChange={handleEmailChange}
+          type="text"
+          placeholder="Ingresa tu usuario"
+          value={username}
+          onChange={handleUsernameChange}
           disabled={loading}
         />
       </div>
@@ -89,7 +87,7 @@ export function LoginForm() {
         type="submit"
         size="pill"
         className="mt-1"
-        disabled={!email.trim() || !password || loading}
+        disabled={!username.trim() || !password || loading}
       >
         {loading ? "Iniciando sesión..." : "Iniciar sesión"}
       </Button>

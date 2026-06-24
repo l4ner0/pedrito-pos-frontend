@@ -7,13 +7,13 @@ export interface AuthResponse {
 }
 
 export async function loginApi(
-  email: string,
+  username: string,
   password: string,
 ): Promise<AuthResponse> {
   const res = await fetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ username, password }),
   });
 
   if (!res.ok) {
