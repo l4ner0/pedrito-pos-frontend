@@ -24,7 +24,7 @@ Tests use **Vitest** + **@testing-library/react** + jsdom. Config in `vitest.con
 - **Tailwind CSS v4** — CSS-first configuration; no `tailwind.config.ts`. All design tokens are defined in `src/app/globals.css` via `@theme inline`.
 - **shadcn/ui** — primitives (`button.tsx`, `input.tsx`, etc.) installed in `src/components/ui/`. Do not modify shadcn files directly; extend via wrapper components. Custom atomic components also live in the same folder alongside the shadcn primitives. Integrated via `@import "shadcn/tailwind.css"` in `globals.css`.
 - **@base-ui/react** — installed as an alternative primitive library if needed
-- **Zustand** — global state; cart store implemented at `src/store/cartStore.ts`
+- **Zustand** — global state; stores at `src/store/` (`authStore.ts` for auth, `cartStore.ts` for cart)
 - **lucide-react** — icon library
 - **pnpm** as the package manager
 
@@ -55,13 +55,27 @@ src/
 │   ├── ventas/                 # VentasContent, PuntoDeVenta, OrderPanel, etc.
 │   └── configuracion/          # ConfiguracionContent
 ├── store/
+│   ├── authStore.ts            # Zustand auth store (in-memory: accessToken + user)
 │   └── cartStore.ts            # Zustand cart store
+├── services/
+│   ├── authService.ts          # loginApi / refreshApi / logoutApi (call BFF route handlers)
+│   └── categoryService.ts      # fetchCategories / createCategory (call backend directly)
 └── lib/
+    ├── api.ts                  # fetchWithAuth — attaches Bearer token, handles 401 refresh+retry
     ├── utils.ts                # cn() helper (clsx + tailwind-merge)
-    └── mock-data.ts            # All mock data + types
+    └── mock-data.ts            # Mock data + types (products, sales, dashboard)
 ```
 
-Route groups: `(public)` renders without sidebar; `(protected)` wraps all protected routes in `DashboardShell`. No real backend — all data comes from `lib/mock-data.ts`.
+Route groups: `(public)` renders without sidebar; `(protected)` wraps all protected routes in `DashboardShell` via `AuthGuard`.
+
+### Authentication (BFF pattern)
+
+The backend runs at `NEXT_PUBLIC_API_URL` (default `http://localhost:8080`). Auth uses a BFF pattern — Next.js route handlers in `src/app/api/auth/` proxy login/refresh/logout to the backend and manage the `refreshToken` httpOnly cookie (never exposed to JS). The `accessToken` lives only in Zustand memory (`authStore`).
+
+- **Login flow**: `LoginForm` → `loginApi()` → `/api/auth/login` (route handler) → backend → sets httpOnly cookie, returns `accessToken + user` to client → `authStore.setAuth()`
+- **Session restore on reload**: `AuthGuard` calls `refreshApi()` on mount; if the httpOnly cookie is valid, the backend returns a new token pair
+- **Authenticated requests**: use `fetchWithAuth(url, options)` from `src/lib/api.ts`. It attaches `Authorization: Bearer {token}`, and on 401 automatically refreshes (mutex prevents concurrent refresh calls) and retries the original request
+- **Route handlers vs direct calls**: route handlers are only for auth (need to touch httpOnly cookies). All other backend calls go direct from the client using `fetchWithAuth` with `NEXT_PUBLIC_API_URL`
 
 ### Sidebar collapse
 
@@ -71,7 +85,9 @@ Custom dropdowns (`UserMenu`, `PeriodFilter`) follow the same pattern: local `op
 
 ### Inventory CRUD pattern
 
-The inventory page is split into a Server Component (`inventario/page.tsx`) that filters `products` from `mock-data.ts` via URL search params, and a Client Component (`InventoryContent`) that owns all modal/toast state. When a real API is added, `InventoryContent` is the integration point.
+The inventory page is split into a Server Component (`inventario/page.tsx`) that filters `products` from `mock-data.ts` via URL search params, and a Client Component (`InventoryContent`) that owns all modal/toast state. `InventoryContent` is the integration point for the real product API when it's added.
+
+`ProductFormModal` fetches real categories from the backend on open (`fetchCategories`) and creates new ones inline via `createCategory` (both in `categoryService.ts`). The filter dropdown in `InventoryFilters` still uses static category options.
 
 ### Ventas / POS architecture
 
@@ -152,6 +168,7 @@ All console communication and responses to the user must be in **Spanish**.
 ## Constraints
 
 - No database connections or ORMs.
+- Next.js route handlers (`src/app/api/`) are only for auth (BFF/httpOnly cookie management). Other API calls go direct to the backend using `fetchWithAuth`.
 - No real API endpoints with business logic unless explicitly requested.
 - No new libraries outside the agreed stack without justification.
 - No over-engineering — start simple, grow as needed.
