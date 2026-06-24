@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { type Product } from "@/lib/mock-data";
-import { CATEGORY_OPTIONS } from "./InventoryFilters";
+import { fetchCategories } from "@/services/categoryService";
 import { Combobox } from "@/components/ui/Combobox";
 
 type FormValues = {
@@ -32,8 +32,6 @@ function productToForm(p: Product): FormValues {
   };
 }
 
-const CATEGORY_OPTIONS_FILTERED = CATEGORY_OPTIONS.filter((o) => o.value !== "todos");
-
 interface ProductFormModalProps {
   open: boolean;
   product: Product | null;
@@ -45,10 +43,25 @@ interface ProductFormModalProps {
 
 export function ProductFormModal({ open, product, persistent = true, onClose, onSuccess, onNewCategory }: ProductFormModalProps) {
   const [form, setForm] = useState<FormValues>(EMPTY_FORM);
+  const [categoryOptions, setCategoryOptions] = useState<{ value: string; label: string }[]>([]);
 
   useEffect(() => {
     setForm(product ? productToForm(product) : EMPTY_FORM);
   }, [product, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    fetchCategories().then((cats) =>
+      setCategoryOptions(
+        cats
+          .filter((c) => c.active)
+          .map((c) => ({
+            value: c.name,
+            label: c.name.charAt(0).toUpperCase() + c.name.slice(1),
+          })),
+      ),
+    );
+  }, [open]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -146,7 +159,7 @@ export function ProductFormModal({ open, product, persistent = true, onClose, on
               Categoría
             </label>
             <Combobox
-              options={CATEGORY_OPTIONS_FILTERED}
+              options={categoryOptions}
               value={form.category}
               onChange={(v) => setForm((f) => ({ ...f, category: v }))}
               onCreateNew={onNewCategory}
