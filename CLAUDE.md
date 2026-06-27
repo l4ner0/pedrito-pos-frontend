@@ -14,7 +14,7 @@ pnpm test:ui    # run Vitest with browser UI
 pnpm test -- Badge   # run tests matching a pattern (filter by filename or test name)
 ```
 
-Tests use **Vitest** + **@testing-library/react** + jsdom. Config in `vitest.config.ts`. Setup file at `src/test/setup.ts` (imports `@testing-library/jest-dom`). Test files are co-located next to the component as `ComponentName.test.tsx`.
+Tests use **Vitest** + **@testing-library/react** + jsdom. Config in `vitest.config.ts`. Setup file at `src/test/setup.ts` (imports `@testing-library/jest-dom`). Test files are co-located next to the component as `ComponentName.test.tsx`. Existing tests: `Badge`, `ProductAvatar`, `KPICard`, `StatusAlert`, `PeriodFilter`.
 
 ## Stack
 
@@ -72,7 +72,8 @@ Route groups: `(public)` renders without sidebar; `(protected)` wraps all protec
 
 The backend runs at `NEXT_PUBLIC_API_URL` (default `http://localhost:8080`). Auth uses a BFF pattern — Next.js route handlers in `src/app/api/auth/` proxy login/refresh/logout to the backend and manage the `refreshToken` httpOnly cookie (never exposed to JS). The `accessToken` lives only in Zustand memory (`authStore`).
 
-- **Login flow**: `LoginForm` → `loginApi()` → `/api/auth/login` (route handler) → backend → sets httpOnly cookie, returns `accessToken + user` to client → `authStore.setAuth()`
+- **User roles**: `UserRole = "ADMIN" | "CASHIER"` (exported from `authStore.ts`). Available in `useAuthStore().user.role` after login.
+- **Login flow**: `LoginForm` → `loginApi(username, password)` → `/api/auth/login` (route handler) → backend → sets httpOnly cookie, returns `accessToken + user` to client → `authStore.setAuth()`
 - **Session restore on reload**: `AuthGuard` calls `refreshApi()` on mount; if the httpOnly cookie is valid, the backend returns a new token pair
 - **Authenticated requests**: use `fetchWithAuth(url, options)` from `src/lib/api.ts`. It attaches `Authorization: Bearer {token}`, and on 401 automatically refreshes (mutex prevents concurrent refresh calls) and retries the original request
 - **Route handlers vs direct calls**: route handlers are only for auth (need to touch httpOnly cookies). All other backend calls go direct from the client using `fetchWithAuth` with `NEXT_PUBLIC_API_URL`
@@ -87,7 +88,7 @@ Custom dropdowns (`UserMenu`, `PeriodFilter`) follow the same pattern: local `op
 
 The inventory page is split into a Server Component (`inventario/page.tsx`) that filters `products` from `mock-data.ts` via URL search params, and a Client Component (`InventoryContent`) that owns all modal/toast state. `InventoryContent` is the integration point for the real product API when it's added.
 
-`ProductFormModal` fetches real categories from the backend on open (`fetchCategories`) and creates new ones inline via `createCategory` (both in `categoryService.ts`). The filter dropdown in `InventoryFilters` still uses static category options.
+`ProductFormModal` fetches real categories from the backend on open (`fetchCategories`) and creates new ones inline via `createCategory` (both in `categoryService.ts`). The filter dropdown in `InventoryFilters` still uses static category options. **Product save is local-only**: `handleSubmit` calls `onClose` + `onSuccess` without a real API call — `InventoryContent` is the integration point for the product CRUD API when it's added.
 
 ### Ventas / POS architecture
 
@@ -160,6 +161,10 @@ When implementing new features, always extract reusable UI elements as atomic co
 **`ProductAvatar`** (`src/components/ui/ProductAvatar.tsx`) — product image with a `Package` icon fallback. Sizes: `"sm" | "md" | "lg"`.
 
 **`ProductCard`** (`src/components/ui/ProductCard.tsx`) — POS catalog tile. Disabled (`opacity-50`, non-clickable) when `stock === 0`. Shows warning color and "Stock bajo" label when `0 < stock < LOW_STOCK_THRESHOLD`.
+
+**`Badge`** (`src/components/ui/Badge.tsx`) — pill label. `variant`: `"success" | "warning" | "danger" | "purple" | "blue" | "teal" | "lime" | "amber" | "emerald" | "default"`. Used for category tags, payment method labels, stock status.
+
+**`StatusAlert`** (`src/components/ui/status-alert.tsx`) — inline banner with icon. Props: `variant` (`"success" | "warning" | "error"`), `message: React.ReactNode`. Renders with `role="alert"`. Use for form-level errors and inline feedback (not floating notifications — use `Toast` for those).
 
 ## Language
 
