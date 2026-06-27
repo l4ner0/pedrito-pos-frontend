@@ -6,6 +6,7 @@ import { fetchSales, type SaleResponse, type SalePaymentMethod, type SaleStatus 
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { SaleDetailModal } from "./SaleDetailModal";
+import { Select } from "@/components/ui/Select";
 import { cn } from "@/lib/utils";
 
 type Period = "today" | "week" | "month";
@@ -65,6 +66,9 @@ const STATUS_OPTIONS: { value: SaleStatus | ""; label: string }[] = [
   { value: "CANCELLED", label: "Cancelada" },
 ];
 
+type MethodOption = SalePaymentMethod | "";
+type StatusOption = SaleStatus | "";
+
 function formatDatetime(iso: string): string {
   const d = new Date(iso);
   const date = d.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
@@ -85,8 +89,8 @@ export function ListadoDeVentas() {
 
   const [ticketInput, setTicketInput] = useState("");
   const [debouncedTicket, setDebouncedTicket] = useState("");
-  const [activeMethod, setActiveMethod] = useState<SalePaymentMethod | "">("");
-  const [activeStatus, setActiveStatus] = useState<SaleStatus | "">("");
+  const [activeMethod, setActiveMethod] = useState<MethodOption>("");
+  const [activeStatus, setActiveStatus] = useState<StatusOption>("");
   const [period, setPeriod] = useState<Period>("today");
 
   const periodRange = getPeriodRange(period);
@@ -122,12 +126,12 @@ export function ListadoDeVentas() {
     setPage(1);
   }
 
-  function handleMethodChange(val: SalePaymentMethod | "") {
+  function handleMethodChange(val: MethodOption) {
     setActiveMethod(val);
     setPage(1);
   }
 
-  function handleStatusChange(val: SaleStatus | "") {
+  function handleStatusChange(val: StatusOption) {
     setActiveStatus(val);
     setPage(1);
   }
@@ -248,28 +252,17 @@ export function ListadoDeVentas() {
               </div>
             </div>
 
-            <div className="flex gap-8">
+            <div className="flex gap-6">
               {/* Method filter */}
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   Método de pago
                 </p>
-                <div className="flex gap-2">
-                  {METHOD_OPTIONS.map(({ value, label }) => (
-                    <button
-                      key={label}
-                      onClick={() => handleMethodChange(value)}
-                      className={cn(
-                        "rounded-full px-3.5 py-1 text-sm font-medium transition-colors",
-                        activeMethod === value
-                          ? "bg-primary text-white"
-                          : "bg-secondary text-muted-foreground hover:bg-border",
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
+                <Select<MethodOption>
+                  value={activeMethod}
+                  options={METHOD_OPTIONS}
+                  onChange={handleMethodChange}
+                />
               </div>
 
               {/* Status filter */}
@@ -277,22 +270,11 @@ export function ListadoDeVentas() {
                 <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                   Estado
                 </p>
-                <div className="flex gap-2">
-                  {STATUS_OPTIONS.map(({ value, label }) => (
-                    <button
-                      key={label}
-                      onClick={() => handleStatusChange(value)}
-                      className={cn(
-                        "rounded-full px-3.5 py-1 text-sm font-medium transition-colors",
-                        activeStatus === value
-                          ? "bg-primary text-white"
-                          : "bg-secondary text-muted-foreground hover:bg-border",
-                      )}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
+                <Select<StatusOption>
+                  value={activeStatus}
+                  options={STATUS_OPTIONS}
+                  onChange={handleStatusChange}
+                />
               </div>
             </div>
           </div>
