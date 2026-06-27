@@ -59,7 +59,8 @@ src/
 │   └── cartStore.ts            # Zustand cart store
 ├── services/
 │   ├── authService.ts          # loginApi / refreshApi / logoutApi (call BFF route handlers)
-│   └── categoryService.ts      # fetchCategories / createCategory (call backend directly)
+│   ├── categoryService.ts      # fetchCategories / createCategory (call backend directly)
+│   └── productService.ts       # fetchProducts / createProduct / updateProduct / deleteProduct
 └── lib/
     ├── api.ts                  # fetchWithAuth — attaches Bearer token, handles 401 refresh+retry
     ├── utils.ts                # cn() helper (clsx + tailwind-merge)
@@ -86,9 +87,21 @@ Custom dropdowns (`UserMenu`, `PeriodFilter`) follow the same pattern: local `op
 
 ### Inventory CRUD pattern
 
-The inventory page is split into a Server Component (`inventario/page.tsx`) that filters `products` from `mock-data.ts` via URL search params, and a Client Component (`InventoryContent`) that owns all modal/toast state. `InventoryContent` is the integration point for the real product API when it's added.
+`inventario/page.tsx` is a thin Server Component that wraps `InventoryContent` (client) in `<Suspense>`. All state, fetching, and modal logic lives in `InventoryContent`.
 
-`ProductFormModal` fetches real categories from the backend on open (`fetchCategories`) and creates new ones inline via `createCategory` (both in `categoryService.ts`). The filter dropdown in `InventoryFilters` still uses static category options. **Product save is local-only**: `handleSubmit` calls `onClose` + `onSuccess` without a real API call — `InventoryContent` is the integration point for the product CRUD API when it's added.
+**URL-driven state:** `q`, `categoria`, `page` (1-based, default 1), and `size` (default 10) are read from search params via `useSearchParams`. `updateParams()` calls `router.replace()` to update them. Filters reset `page` to null (= 1) on change.
+
+**Data flow:**
+- Categories fetched once on mount from `GET /v1/categories`, stored in state, and memoized into `categoryMap: Record<id, name>` and `categoryOptions` for the filter dropdown.
+- Products fetched from `GET /v1/product?page=&size=` (1-based) on `[page, pageSize, refreshKey]`. Uses `AbortController` to cancel in-flight requests on re-render.
+- Client-side filtering (`q` and `categoria`) is applied over the current page's data after fetch.
+- `refreshKey` (incremented in `handleFormSuccess` and `handleDelete`) triggers a re-fetch after any mutation.
+
+**`ProductFormModal`** receives `product: ApiProduct | null` and `categoryMap`. On open it fetches fresh categories from the backend. For create: validates `stock >= lowStockThreshold`, resolves `categoryId` from the categories list, calls `POST /v1/product`. For edit: skips the stock validation, calls `PATCH /v1/product/:id`. Inline category creation calls `POST /v1/categories` and adds the result to local state.
+
+**`productService.ts`** exports `ApiProduct`, `ProductPage`, `CreateProductInput`, `UpdateProductInput` and: `fetchProducts(page, size, signal?)`, `createProduct(input)`, `updateProduct(id, input)`, `deleteProduct(id)`. All use `fetchWithAuth`.
+
+**Toast state** in `InventoryContent` uses `toast: { message: string; variant: "success" | "error" } | null` (not a plain string) to support error toasts on failed deletes.
 
 ### Ventas / POS architecture
 
@@ -152,9 +165,11 @@ Note: `--destructive` (shadcn) and `--danger` (custom) both map to `#C45B5B`. Us
 
 When implementing new features, always extract reusable UI elements as atomic components under `src/components/ui/`. A component is atomic if it can be used in more than one context (badges, avatars, inputs, specialized buttons, etc.). Section-specific components live in their own folder (`inventory/`, `ventas/`, etc.).
 
+**`DataTable<T>`** (`src/components/ui/DataTable.tsx`) — generic paginated table. Define columns via `Column<T>[]` (each with `header`, `cell`, optional `skeleton`, optional `cellClassName` as string or `(row: T) => string`). Props include `page` (1-based), `pageSize`, `pageSizeOptions`, `totalPages`, `totalElements`, `itemLabel`, `footerExtra`, `isLoading`, `skeletonRows`. Use `ProductTable` as a reference wrapper. The trailing comma in `DataTable<T,>` is required to disambiguate from JSX.
+
 **`Combobox`** (`src/components/ui/Combobox.tsx`) — searchable select with optional inline creation. Pass `onCreateNew` to enable a "create new" row when no option matches the typed text; `createNewLabel` customizes the label. Uses the same outside-click-to-close pattern as other custom dropdowns.
 
-**`Toast`** (`src/components/ui/Toast.tsx`) — fixed top-right notification. Props: `open`, `variant` (`"success" | "warning" | "error"`), `message`, `duration` (default 3000 ms), `onClose`. Auto-dismisses via a `setTimeout`; the parent drives open/close state with a message string (`open={message !== ""}`).
+**`Toast`** (`src/components/ui/Toast.tsx`) — fixed top-right notification. Props: `open`, `variant` (`"success" | "warning" | "error"`), `message`, `duration` (default 3000 ms), `onClose`. Auto-dismisses via a `setTimeout`. When multiple variants are needed, drive with `toast: { message, variant } | null` and pass `open={toast !== null}`.
 
 **`ConfirmModal`** (`src/components/ui/ConfirmModal.tsx`) — centered dialog for destructive actions. Props: `open`, `variant` (`"success" | "warning" | "error"`), `title`, `description?`, `confirmLabel?`, `cancelLabel?`, `icon?`, `persistent?` (default `true` — blocks backdrop click), `onConfirm`, `onClose`. Each variant ships a default icon; pass `icon` to override.
 

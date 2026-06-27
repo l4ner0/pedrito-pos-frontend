@@ -7,7 +7,7 @@ import { ProductTable } from "./ProductTable";
 import { ProductFormModal } from "./ProductFormModal";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Toast } from "@/components/ui/Toast";
-import { type ApiProduct, fetchProducts } from "@/services/productService";
+import { type ApiProduct, fetchProducts, deleteProduct } from "@/services/productService";
 import { fetchCategories, type Category } from "@/services/categoryService";
 
 const PAGE_SIZE_OPTIONS = [10, 50, 100];
@@ -30,7 +30,7 @@ export function InventoryContent() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ApiProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<ApiProduct | null>(null);
-  const [toastMessage, setToastMessage] = useState("");
+  const [toast, setToast] = useState<{ message: string; variant: "success" | "error" } | null>(null);
 
   const categoryMap = useMemo(() => {
     const map: Record<string, string> = {};
@@ -108,19 +108,28 @@ export function InventoryContent() {
   }
 
   function handleFormSuccess(isEdit: boolean) {
-    setToastMessage(
-      isEdit ? "Producto actualizado correctamente" : "Producto agregado correctamente",
-    );
+    setToast({
+      message: isEdit ? "Producto actualizado correctamente" : "Producto agregado correctamente",
+      variant: "success",
+    });
     setRefreshKey((k) => k + 1);
   }
 
   function handleNewCategory(name: string) {
-    setToastMessage(`Categoría "${name}" creada correctamente`);
+    setToast({ message: `Categoría "${name}" creada correctamente`, variant: "success" });
   }
 
-  function handleDelete() {
-    setDeletingProduct(null);
-    setToastMessage("Producto eliminado correctamente");
+  async function handleDelete() {
+    if (!deletingProduct) return;
+    try {
+      await deleteProduct(deletingProduct.id);
+      setDeletingProduct(null);
+      setToast({ message: "Producto eliminado correctamente", variant: "success" });
+      setRefreshKey((k) => k + 1);
+    } catch {
+      setDeletingProduct(null);
+      setToast({ message: "No se pudo eliminar el producto. Intenta de nuevo.", variant: "error" });
+    }
   }
 
   return (
@@ -160,10 +169,10 @@ export function InventoryContent() {
         onClose={() => setDeletingProduct(null)}
       />
       <Toast
-        open={toastMessage !== ""}
-        variant="success"
-        message={toastMessage}
-        onClose={() => setToastMessage("")}
+        open={toast !== null}
+        variant={toast?.variant ?? "success"}
+        message={toast?.message ?? ""}
+        onClose={() => setToast(null)}
       />
     </>
   );

@@ -50,6 +50,11 @@ export async function createProduct(input: CreateProductInput): Promise<ApiProdu
 
 export type UpdateProductInput = CreateProductInput;
 
+export async function deleteProduct(id: string): Promise<void> {
+  const res = await fetchWithAuth(`${API_URL}/v1/product/${id}`, { method: "DELETE" });
+  if (!res.ok) throw new Error("Error al eliminar producto");
+}
+
 export async function updateProduct(id: string, input: UpdateProductInput): Promise<ApiProduct> {
   const res = await fetchWithAuth(`${API_URL}/v1/product/${id}`, {
     method: "PATCH",
