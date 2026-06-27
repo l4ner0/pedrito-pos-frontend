@@ -1,25 +1,39 @@
 "use client";
 
 import { X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { type Sale, type SaleMethod } from "@/lib/mock-data";
+import { type SaleResponse, type SalePaymentMethod, type SaleStatus } from "@/services/saleService";
+import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 
-const METHOD_COLOR: Record<SaleMethod, string> = {
-  Efectivo: "text-primary",
-  Tarjeta:  "text-sky-600",
-  Yape:     "text-violet-600",
+const METHOD_LABEL: Record<SalePaymentMethod, string> = {
+  EFECTIVO: "Efectivo",
+  YAPE: "Yape",
 };
 
+const STATUS_VARIANT: Record<SaleStatus, BadgeVariant> = {
+  ACTIVE: "success",
+  CANCELLED: "danger",
+};
+
+const STATUS_LABEL: Record<SaleStatus, string> = {
+  ACTIVE: "Activa",
+  CANCELLED: "Cancelada",
+};
+
+function formatDatetime(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const time = d.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${date} · ${time}`;
+}
+
 interface SaleDetailModalProps {
-  sale: Sale | null;
+  sale: SaleResponse | null;
   onClose: () => void;
   persistent?: boolean;
 }
 
 export function SaleDetailModal({ sale, onClose, persistent = false }: SaleDetailModalProps) {
   if (!sale) return null;
-
-  const subtotal = sale.items.reduce((sum, i) => sum + i.qty * i.unitPrice, 0);
 
   return (
     <div
@@ -32,7 +46,10 @@ export function SaleDetailModal({ sale, onClose, persistent = false }: SaleDetai
       >
         {/* Header */}
         <div className="mb-1 flex items-start justify-between">
-          <h2 className="text-lg font-semibold text-foreground">Detalle de venta</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-foreground">Detalle de venta</h2>
+            <Badge label={STATUS_LABEL[sale.status]} variant={STATUS_VARIANT[sale.status]} />
+          </div>
           <button
             onClick={onClose}
             className="text-muted-foreground transition-colors hover:text-foreground"
@@ -41,21 +58,21 @@ export function SaleDetailModal({ sale, onClose, persistent = false }: SaleDetai
           </button>
         </div>
         <p className="mb-5 text-sm text-muted-foreground">
-          {sale.id} · {sale.datetime}
+          {sale.ticketCode} · {formatDatetime(sale.createdAt)}
         </p>
 
         {/* Product items */}
         <div className="mb-5 divide-y divide-border">
-          {sale.items.map((item, idx) => (
-            <div key={idx} className="flex items-start justify-between gap-4 py-3.5 first:pt-0">
+          {sale.items.map((item) => (
+            <div key={item.id} className="flex items-start justify-between gap-4 py-3.5 first:pt-0">
               <div>
-                <p className="text-sm font-semibold text-foreground">{item.name}</p>
+                <p className="text-sm font-semibold text-foreground">{item.productName}</p>
                 <p className="text-xs text-muted-foreground">
-                  {item.qty} × S/ {item.unitPrice.toFixed(2)}
+                  {item.quantity} × S/ {item.unitPrice.toFixed(2)}
                 </p>
               </div>
               <span className="shrink-0 text-sm font-medium text-foreground">
-                S/ {(item.qty * item.unitPrice).toFixed(2)}
+                S/ {item.lineTotal.toFixed(2)}
               </span>
             </div>
           ))}
@@ -65,8 +82,14 @@ export function SaleDetailModal({ sale, onClose, persistent = false }: SaleDetai
         <div className="rounded-xl bg-secondary px-4 py-3">
           <div className="flex items-center justify-between py-2 text-sm">
             <span className="text-muted-foreground">Subtotal</span>
-            <span className="text-foreground">S/ {subtotal.toFixed(2)}</span>
+            <span className="text-foreground">S/ {sale.subtotal.toFixed(2)}</span>
           </div>
+          {sale.discountAmount > 0 && (
+            <div className="flex items-center justify-between py-2 text-sm">
+              <span className="text-muted-foreground">Descuento</span>
+              <span className="text-success">-S/ {sale.discountAmount.toFixed(2)}</span>
+            </div>
+          )}
           <div className="border-t border-border" />
           <div className="flex items-center justify-between py-2 text-sm">
             <span className="font-semibold text-foreground">Total</span>
@@ -74,10 +97,14 @@ export function SaleDetailModal({ sale, onClose, persistent = false }: SaleDetai
           </div>
           <div className="flex items-center justify-between py-2 text-sm">
             <span className="text-muted-foreground">Método de pago</span>
-            <span className={cn("font-medium", METHOD_COLOR[sale.method])}>
-              {sale.method}
-            </span>
+            <span className="font-medium text-foreground">{METHOD_LABEL[sale.paymentMethod]}</span>
           </div>
+          {sale.changeGiven > 0 && (
+            <div className="flex items-center justify-between py-2 text-sm">
+              <span className="text-muted-foreground">Vuelto</span>
+              <span className="font-medium text-success">S/ {sale.changeGiven.toFixed(2)}</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
