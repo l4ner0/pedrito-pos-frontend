@@ -1,21 +1,27 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, DollarSign, ClipboardList, Info } from "lucide-react";
-import { fetchSales, type SaleResponse, type SalePaymentMethod, type SaleStatus } from "@/services/saleService";
+import {
+  Search,
+  HandCoins,
+  ClipboardList,
+  Info,
+  CreditCard,
+  Tag,
+  CalendarDays,
+} from "lucide-react";
+import {
+  fetchSales,
+  type SaleResponse,
+  type SalePaymentMethod,
+  type SaleStatus,
+} from "@/services/saleService";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { SaleDetailModal } from "./SaleDetailModal";
-import { Select } from "@/components/ui/Select";
-import { cn } from "@/lib/utils";
+import { PeriodFilter } from "@/components/ui/PeriodFilter";
 
 type Period = "today" | "week" | "month";
-
-const PERIODS: { id: Period; label: string }[] = [
-  { id: "today", label: "Hoy" },
-  { id: "week",  label: "Esta semana" },
-  { id: "month", label: "Este mes" },
-];
 
 function toDateString(d: Date): string {
   return d.toISOString().split("T")[0];
@@ -36,34 +42,40 @@ function getPeriodRange(period: Period): { from: string; to: string } {
 
 const METHOD_VARIANT: Record<SalePaymentMethod, BadgeVariant> = {
   EFECTIVO: "default",
-  YAPE:     "purple",
+  YAPE: "purple",
 };
 
 const METHOD_LABEL: Record<SalePaymentMethod, string> = {
   EFECTIVO: "Efectivo",
-  YAPE:     "Yape",
+  YAPE: "Yape",
 };
 
 const STATUS_VARIANT: Record<SaleStatus, BadgeVariant> = {
-  ACTIVE:    "success",
+  ACTIVE: "success",
   CANCELLED: "danger",
 };
 
 const STATUS_LABEL: Record<SaleStatus, string> = {
-  ACTIVE:    "Activa",
+  ACTIVE: "Activa",
   CANCELLED: "Cancelada",
 };
 
 const METHOD_OPTIONS: { value: SalePaymentMethod | ""; label: string }[] = [
-  { value: "",         label: "Todos" },
+  { value: "", label: "Todos" },
   { value: "EFECTIVO", label: "Efectivo" },
-  { value: "YAPE",     label: "Yape" },
+  { value: "YAPE", label: "Yape" },
 ];
 
 const STATUS_OPTIONS: { value: SaleStatus | ""; label: string }[] = [
-  { value: "",          label: "Todos" },
-  { value: "ACTIVE",    label: "Activa" },
+  { value: "", label: "Todos" },
+  { value: "ACTIVE", label: "Activa" },
   { value: "CANCELLED", label: "Cancelada" },
+];
+
+const PERIOD_OPTIONS: { value: Period; label: string }[] = [
+  { value: "today", label: "Hoy" },
+  { value: "week", label: "Esta semana" },
+  { value: "month", label: "Este mes" },
 ];
 
 type MethodOption = SalePaymentMethod | "";
@@ -71,8 +83,16 @@ type StatusOption = SaleStatus | "";
 
 function formatDatetime(iso: string): string {
   const d = new Date(iso);
-  const date = d.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const time = d.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const date = d.toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+  const time = d.toLocaleTimeString("es-PE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
   return `${date} · ${time}`;
 }
 
@@ -136,8 +156,8 @@ export function ListadoDeVentas() {
     setPage(1);
   }
 
-  function handlePeriodChange(p: Period) {
-    setPeriod(p);
+  function handlePeriodChange(val: string) {
+    setPeriod(val as Period);
     setPage(1);
   }
 
@@ -150,19 +170,31 @@ export function ListadoDeVentas() {
     setPage(1);
   }
 
-  const activeSales = useMemo(() => sales.filter((s) => s.status === "ACTIVE"), [sales]);
-  const totalRevenue = useMemo(() => activeSales.reduce((sum, s) => sum + s.total, 0), [activeSales]);
+  const activeSales = useMemo(
+    () => sales.filter((s) => s.status === "ACTIVE"),
+    [sales],
+  );
+  const totalRevenue = useMemo(
+    () => activeSales.reduce((sum, s) => sum + s.total, 0),
+    [activeSales],
+  );
 
   const columns: Column<SaleResponse>[] = [
     {
       header: "Ticket",
       skeleton: <div className="h-3 w-16 animate-pulse rounded bg-secondary" />,
-      cell: (s) => <span className="font-medium text-foreground">{s.ticketCode}</span>,
+      cell: (s) => (
+        <span className="font-medium text-foreground">{s.ticketCode}</span>
+      ),
     },
     {
       header: "Fecha / Hora",
       skeleton: <div className="h-3 w-32 animate-pulse rounded bg-secondary" />,
-      cell: (s) => <span className="text-muted-foreground">{formatDatetime(s.createdAt)}</span>,
+      cell: (s) => (
+        <span className="text-muted-foreground">
+          {formatDatetime(s.createdAt)}
+        </span>
+      ),
     },
     {
       header: "Productos",
@@ -172,16 +204,26 @@ export function ListadoDeVentas() {
     },
     {
       header: "Método",
-      skeleton: <div className="h-5 w-16 animate-pulse rounded-full bg-secondary" />,
+      skeleton: (
+        <div className="h-5 w-16 animate-pulse rounded-full bg-secondary" />
+      ),
       cell: (s) => (
-        <Badge label={METHOD_LABEL[s.paymentMethod]} variant={METHOD_VARIANT[s.paymentMethod]} />
+        <Badge
+          label={METHOD_LABEL[s.paymentMethod]}
+          variant={METHOD_VARIANT[s.paymentMethod]}
+        />
       ),
     },
     {
       header: "Estado",
-      skeleton: <div className="h-5 w-20 animate-pulse rounded-full bg-secondary" />,
+      skeleton: (
+        <div className="h-5 w-20 animate-pulse rounded-full bg-secondary" />
+      ),
       cell: (s) => (
-        <Badge label={STATUS_LABEL[s.status]} variant={STATUS_VARIANT[s.status]} />
+        <Badge
+          label={STATUS_LABEL[s.status]}
+          variant={STATUS_VARIANT[s.status]}
+        />
       ),
     },
     {
@@ -194,10 +236,15 @@ export function ListadoDeVentas() {
       header: "",
       headerClassName: "py-3 pl-3 pr-4 lg:pl-4 lg:pr-6",
       cellClassName: "py-2.5 pl-3 pr-4 lg:py-3 lg:pl-4 lg:pr-6",
-      skeleton: <div className="ml-auto h-5 w-5 animate-pulse rounded bg-secondary" />,
+      skeleton: (
+        <div className="ml-auto h-5 w-5 animate-pulse rounded bg-secondary" />
+      ),
       cell: (s) => (
         <button
-          onClick={(e) => { e.stopPropagation(); setSelectedSale(s); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedSale(s);
+          }}
           className="text-muted-foreground transition-colors hover:text-foreground"
         >
           <Info size={16} />
@@ -209,86 +256,17 @@ export function ListadoDeVentas() {
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="flex flex-col gap-5 p-6">
-        {/* Filters */}
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="flex flex-col gap-4">
-            {/* Period */}
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Período
-              </p>
-              <div className="flex gap-2">
-                {PERIODS.map(({ id, label }) => (
-                  <button
-                    key={id}
-                    onClick={() => handlePeriodChange(id)}
-                    className={cn(
-                      "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                      period === id
-                        ? "bg-brand text-white"
-                        : "bg-secondary text-muted-foreground hover:bg-border",
-                    )}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Ticket search */}
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Buscar ticket
-              </p>
-              <div className="relative">
-                <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={ticketInput}
-                  onChange={(e) => handleTicketChange(e.target.value)}
-                  placeholder="Ej. #0001"
-                  className="w-full rounded-xl border border-border bg-secondary py-2 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="flex gap-6">
-              {/* Method filter */}
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  Método de pago
-                </p>
-                <Select<MethodOption>
-                  value={activeMethod}
-                  options={METHOD_OPTIONS}
-                  onChange={handleMethodChange}
-                />
-              </div>
-
-              {/* Status filter */}
-              <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                  Estado
-                </p>
-                <Select<StatusOption>
-                  value={activeStatus}
-                  options={STATUS_OPTIONS}
-                  onChange={handleStatusChange}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* KPI Cards */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-5 py-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand/10 text-brand">
-              <DollarSign size={18} />
+              <HandCoins size={18} />
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Total recaudado</p>
-              <p className="text-xl font-bold text-primary">S/ {totalRevenue.toFixed(2)}</p>
+              <p className="text-xl font-bold text-primary">
+                S/ {totalRevenue.toFixed(2)}
+              </p>
             </div>
           </div>
 
@@ -298,7 +276,53 @@ export function ListadoDeVentas() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Ventas activas</p>
-              <p className="text-xl font-bold text-foreground">{isLoading ? "—" : activeSales.length}</p>
+              <p className="text-xl font-bold text-foreground">
+                {isLoading ? "—" : activeSales.length}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="rounded-xl border border-border bg-card px-5 py-4">
+          <div className="flex items-center justify-between gap-3">
+            {/* Left: ticket search */}
+            <div className="relative w-48">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                type="text"
+                value={ticketInput}
+                onChange={(e) => handleTicketChange(e.target.value)}
+                placeholder="Buscar ticket..."
+                className="w-full rounded-lg border border-border bg-secondary py-2 pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+              />
+            </div>
+
+            {/* Right: method + status + period */}
+            <div className="flex items-center gap-3">
+              <PeriodFilter
+                value={activeMethod}
+                options={METHOD_OPTIONS}
+                onChange={(val) => handleMethodChange(val as MethodOption)}
+                icon={CreditCard}
+              />
+
+              <PeriodFilter
+                value={activeStatus}
+                options={STATUS_OPTIONS}
+                onChange={(val) => handleStatusChange(val as StatusOption)}
+                icon={Tag}
+              />
+
+              <PeriodFilter
+                value={period}
+                options={PERIOD_OPTIONS}
+                onChange={handlePeriodChange}
+                icon={CalendarDays}
+              />
             </div>
           </div>
         </div>
@@ -321,7 +345,10 @@ export function ListadoDeVentas() {
         />
       </div>
 
-      <SaleDetailModal sale={selectedSale} onClose={() => setSelectedSale(null)} />
+      <SaleDetailModal
+        sale={selectedSale}
+        onClose={() => setSelectedSale(null)}
+      />
     </div>
   );
 }
