@@ -67,7 +67,7 @@ export function SaleSuccessModal({ open, data, onClose }: SaleSuccessModalProps)
           <ul className="mb-4 space-y-3">
             {data.items.map(({ product, quantity }) => (
               <li key={product.id} className="flex items-center gap-3">
-                <ProductAvatar src={product.image} alt={product.name} size="sm" />
+                <ProductAvatar alt={product.name} size="sm" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{product.name}</p>
                   <p className="text-xs text-muted-foreground">

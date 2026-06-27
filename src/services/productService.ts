@@ -23,8 +23,15 @@ export interface ProductPage {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
-export async function fetchProducts(page: number, size = 10, signal?: AbortSignal): Promise<ProductPage> {
+export async function fetchProducts(
+  page: number,
+  size = 10,
+  signal?: AbortSignal,
+  filters?: { name?: string; categoryName?: string },
+): Promise<ProductPage> {
   const params = new URLSearchParams({ page: String(page), size: String(size) });
+  if (filters?.name) params.set("name", filters.name);
+  if (filters?.categoryName) params.set("categoryName", filters.categoryName);
   const res = await fetchWithAuth(`${API_URL}/v1/product?${params}`, { signal });
   if (!res.ok) throw new Error("Error al cargar productos");
   return res.json();

@@ -2,20 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { type Product } from "@/lib/mock-data";
 import { fetchCategories, type Category } from "@/services/categoryService";
+import { fetchProducts, type ApiProduct } from "@/services/productService";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
 
-interface ProductCatalogProps {
-  products: Product[];
-}
-
-export function ProductCatalog({ products }: ProductCatalogProps) {
+export function ProductCatalog() {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("todos");
   const [categories, setCategories] = useState<Category[]>([]);
+  const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { addItem } = useCartStore();
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -25,6 +24,28 @@ export function ProductCatalog({ products }: ProductCatalogProps) {
   useEffect(() => {
     fetchCategories().then(setCategories);
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setIsLoading(true);
+    fetchProducts(1, 100, controller.signal, {
+      name: debouncedSearch || undefined,
+      categoryName: category !== "todos" ? category : undefined,
+    })
+      .then((data) => {
+        setProducts(data.content);
+        setIsLoading(false);
+      })
+      .catch((err: unknown) => {
+        if ((err as Error).name !== "AbortError") setIsLoading(false);
+      });
+    return () => controller.abort();
+  }, [debouncedSearch, category]);
 
   function checkScroll() {
     const el = scrollRef.current;
@@ -47,12 +68,6 @@ export function ProductCatalog({ products }: ProductCatalogProps) {
         label: c.name.charAt(0).toUpperCase() + c.name.slice(1),
       })),
   ];
-
-  const filtered = products.filter((p) => {
-    const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = category === "todos" || p.category === category;
-    return matchesSearch && matchesCategory;
-  });
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background px-6 py-4">
@@ -108,11 +123,25 @@ export function ProductCatalog({ products }: ProductCatalogProps) {
 
       {/* Product grid */}
       <div className="overflow-y-auto">
-        <div className="grid grid-cols-4 gap-3">
-          {filtered.map((product) => (
-            <ProductCard key={product.id} product={product} onClick={addItem} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-4 gap-3">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex flex-col items-center gap-2 rounded-xl bg-card p-4 shadow-sm">
+                <div className="h-14 w-14 animate-pulse rounded-full bg-secondary" />
+                <div className="h-3 w-20 animate-pulse rounded bg-secondary" />
+                <div className="h-3 w-12 animate-pulse rounded bg-secondary" />
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <p className="py-12 text-center text-sm text-muted-foreground">No se encontraron productos</p>
+        ) : (
+          <div className="grid grid-cols-4 gap-3">
+            {products.map((product) => (
+              <ProductCard key={product.id} product={product} onClick={addItem} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

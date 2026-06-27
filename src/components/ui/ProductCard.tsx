@@ -1,14 +1,14 @@
-import { type Product, LOW_STOCK_THRESHOLD } from "@/lib/mock-data";
+import { type ApiProduct } from "@/services/productService";
 import { ProductAvatar } from "./ProductAvatar";
 import { cn } from "@/lib/utils";
 
 interface ProductCardProps {
-  product: Product;
-  onClick: (product: Product) => void;
+  product: ApiProduct;
+  onClick: (product: ApiProduct) => void;
 }
 
 export function ProductCard({ product, onClick }: ProductCardProps) {
-  const isLowStock = product.stock > 0 && product.stock < LOW_STOCK_THRESHOLD;
+  const isLowStock = product.lowStock && product.stock > 0;
   const isOutOfStock = product.stock === 0;
 
   return (
@@ -20,7 +20,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
         "disabled:cursor-not-allowed disabled:opacity-50",
       )}
     >
-      <ProductAvatar src={product.image} alt={product.name} size="lg" />
+      <ProductAvatar alt={product.name} size="lg" />
       <span className="line-clamp-2 text-sm font-medium leading-tight text-foreground">
         {product.name}
       </span>

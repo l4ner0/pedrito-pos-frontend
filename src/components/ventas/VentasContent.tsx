@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { ShoppingCart, ClipboardList } from "lucide-react";
-import { type Product } from "@/lib/mock-data";
 import { PuntoDeVenta } from "./PuntoDeVenta";
 import { ListadoDeVentas } from "./ListadoDeVentas";
 import { cn } from "@/lib/utils";
@@ -14,11 +13,7 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-interface VentasContentProps {
-  products: Product[];
-}
-
-export function VentasContent({ products }: VentasContentProps) {
+export function VentasContent() {
   const [activeTab, setActiveTab] = useState<TabId>("pos");
 
   return (
@@ -45,7 +40,7 @@ export function VentasContent({ products }: VentasContentProps) {
       </div>
 
       {activeTab === "pos" ? (
-        <PuntoDeVenta products={products} />
+        <PuntoDeVenta />
       ) : (
         <ListadoDeVentas />
       )}
