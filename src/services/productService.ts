@@ -29,3 +29,21 @@ export async function fetchProducts(page: number, size = 10, signal?: AbortSigna
   if (!res.ok) throw new Error("Error al cargar productos");
   return res.json();
 }
+
+export interface CreateProductInput {
+  name: string;
+  categoryId: string;
+  sku?: string | null;
+  price: number;
+  stock: number;
+  lowStockThreshold: number;
+}
+
+export async function createProduct(input: CreateProductInput): Promise<ApiProduct> {
+  const res = await fetchWithAuth(`${API_URL}/v1/product`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error("Error al crear producto");
+  return res.json();
+}

@@ -141,18 +141,18 @@ export function DataTable<T,>({
           <div className="flex items-center gap-1">
             <button
               type="button"
-              disabled={page === 0}
+              disabled={page <= 1}
               onClick={() => onPageChange(page - 1)}
               className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
             >
               <ChevronLeft size={15} />
             </button>
             <span className="min-w-[60px] text-center text-xs text-muted-foreground">
-              {page + 1} / {totalPages}
+              {page} / {totalPages}
             </span>
             <button
               type="button"
-              disabled={page >= totalPages - 1}
+              disabled={page >= totalPages}
               onClick={() => onPageChange(page + 1)}
               className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
             >

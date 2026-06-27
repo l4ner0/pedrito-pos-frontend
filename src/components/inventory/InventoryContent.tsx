@@ -29,7 +29,7 @@ export function InventoryContent() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") ?? "";
   const categoria = searchParams.get("categoria") ?? "todos";
-  const page = Number(searchParams.get("page") || "0");
+  const page = Number(searchParams.get("page") || "1");
   const pageSize = Number(searchParams.get("size") || "10");
 
   const [products, setProducts] = useState<ApiProduct[]>([]);
@@ -37,6 +37,7 @@ export function InventoryContent() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalElements, setTotalElements] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -82,7 +83,7 @@ export function InventoryContent() {
         }
       });
     return () => controller.abort();
-  }, [page, pageSize]);
+  }, [page, pageSize, refreshKey]);
 
   function updateParams(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -94,7 +95,7 @@ export function InventoryContent() {
   }
 
   function handlePageChange(newPage: number) {
-    updateParams({ page: newPage === 0 ? null : String(newPage) });
+    updateParams({ page: newPage === 1 ? null : String(newPage) });
   }
 
   function handlePageSizeChange(newSize: number) {
@@ -122,6 +123,7 @@ export function InventoryContent() {
     setToastMessage(
       isEdit ? "Producto actualizado correctamente" : "Producto agregado correctamente",
     );
+    if (!isEdit) setRefreshKey((k) => k + 1);
   }
 
   function handleNewCategory(name: string) {
