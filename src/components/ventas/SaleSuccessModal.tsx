@@ -1,19 +1,13 @@
 "use client";
 
 import { X, Printer, CheckCircle } from "lucide-react";
-import { type CartItem } from "@/store/cartStore";
-import { type PaymentMethod } from "./CheckoutModal";
+import { type SaleResponse, type SalePaymentMethod } from "@/services/saleService";
 import { ProductAvatar } from "@/components/ui/ProductAvatar";
 
-export interface SaleSuccessData {
-  ticketId: string;
-  datetime: string;
-  items: CartItem[];
-  subtotal: number;
-  discountAmount: number | null;
-  total: number;
-  method: PaymentMethod;
-}
+export type SaleSuccessData = Pick<
+  SaleResponse,
+  "ticketCode" | "subtotal" | "discountAmount" | "total" | "paymentMethod" | "amountReceived" | "changeGiven" | "items" | "createdAt"
+>;
 
 interface SaleSuccessModalProps {
   open: boolean;
@@ -21,15 +15,22 @@ interface SaleSuccessModalProps {
   onClose: () => void;
 }
 
-const METHOD_LABEL: Record<PaymentMethod, string> = {
-  efectivo: "Efectivo",
-  yape: "Yape",
+const METHOD_LABEL: Record<SalePaymentMethod, string> = {
+  EFECTIVO: "Efectivo",
+  YAPE: "Yape",
 };
+
+function formatDatetime(iso: string): string {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const time = d.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
+  return `${date} · ${time}`;
+}
 
 export function SaleSuccessModal({ open, data, onClose }: SaleSuccessModalProps) {
   if (!open || !data) return null;
 
-  const appliedDiscount = Math.min(data.discountAmount ?? 0, data.subtotal);
+  const appliedDiscount = Math.min(data.discountAmount, data.subtotal);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
@@ -56,8 +57,8 @@ export function SaleSuccessModal({ open, data, onClose }: SaleSuccessModalProps)
             <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-brand/60">
               N° de Ticket
             </p>
-            <p className="text-3xl font-bold tracking-wide text-brand">{data.ticketId}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{data.datetime}</p>
+            <p className="text-3xl font-bold tracking-wide text-brand">{data.ticketCode}</p>
+            <p className="mt-1 text-xs text-muted-foreground">{formatDatetime(data.createdAt)}</p>
           </div>
 
           {/* Products */}
@@ -65,17 +66,17 @@ export function SaleSuccessModal({ open, data, onClose }: SaleSuccessModalProps)
             Productos
           </p>
           <ul className="mb-4 space-y-3">
-            {data.items.map(({ product, quantity }) => (
-              <li key={product.id} className="flex items-center gap-3">
-                <ProductAvatar alt={product.name} size="sm" />
+            {data.items.map((item) => (
+              <li key={item.id} className="flex items-center gap-3">
+                <ProductAvatar alt={item.productName} size="sm" />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{product.name}</p>
+                  <p className="truncate text-sm font-medium text-foreground">{item.productName}</p>
                   <p className="text-xs text-muted-foreground">
-                    {quantity} × S/ {product.price.toFixed(2)}
+                    {item.quantity} × S/ {item.unitPrice.toFixed(2)}
                   </p>
                 </div>
                 <span className="shrink-0 text-sm font-medium text-foreground">
-                  S/ {(product.price * quantity).toFixed(2)}
+                  S/ {item.lineTotal.toFixed(2)}
                 </span>
               </li>
             ))}
@@ -101,8 +102,14 @@ export function SaleSuccessModal({ open, data, onClose }: SaleSuccessModalProps)
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Método de pago</span>
-              <span className="font-medium text-foreground">{METHOD_LABEL[data.method]}</span>
+              <span className="font-medium text-foreground">{METHOD_LABEL[data.paymentMethod]}</span>
             </div>
+            {data.changeGiven > 0 && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Vuelto</span>
+                <span className="font-medium text-success">S/ {data.changeGiven.toFixed(2)}</span>
+              </div>
+            )}
           </div>
 
           <div className="mb-5 border-t border-dashed border-border" />

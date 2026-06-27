@@ -3,23 +3,21 @@
 import { useState } from "react";
 import { ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
+import { createSale, type SalePaymentMethod } from "@/services/saleService";
 import { DiscountSelector } from "./DiscountSelector";
 import { CheckoutModal, type PaymentMethod } from "./CheckoutModal";
 import { SaleSuccessModal, type SaleSuccessData } from "./SaleSuccessModal";
 import { cn } from "@/lib/utils";
 
-const BASE_ORDER_NUMBER = 49;
-
-function formatDatetime(): string {
-  const now = new Date();
-  const date = now.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
-  const time = now.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
-  return `${date} · ${time}`;
-}
+const PAYMENT_METHOD_MAP: Record<PaymentMethod, SalePaymentMethod> = {
+  efectivo: "EFECTIVO",
+  yape: "YAPE",
+};
 
 export function OrderPanel() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [orderNumber, setOrderNumber] = useState(BASE_ORDER_NUMBER);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [saleData, setSaleData] = useState<SaleSuccessData | null>(null);
 
   const { items, discountAmount, addItem, removeItem, updateQuantity, clearCart, setDiscount } =
@@ -30,23 +28,28 @@ export function OrderPanel() {
   const total = subtotal - discount;
   const isEmpty = items.length === 0;
 
-  function handleConfirm(method: PaymentMethod) {
-    setSaleData({
-      ticketId: `#${String(orderNumber).padStart(4, "0")}`,
-      datetime: formatDatetime(),
-      items: [...items],
-      subtotal,
-      discountAmount,
-      total,
-      method,
-    });
-    setIsCheckoutOpen(false);
+  async function handleConfirm(method: PaymentMethod, received: number) {
+    setIsSubmitting(true);
+    setCheckoutError(null);
+    try {
+      const response = await createSale({
+        discountAmount: discountAmount ?? 0,
+        paymentMethod: PAYMENT_METHOD_MAP[method],
+        amountReceived: received,
+        items: items.map((i) => ({ productId: i.product.id, quantity: i.quantity })),
+      });
+      setSaleData(response);
+      setIsCheckoutOpen(false);
+    } catch (err) {
+      setCheckoutError(err instanceof Error ? err.message : "No se pudo registrar la venta. Intenta de nuevo.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   function handleCloseSuccess() {
     setSaleData(null);
     clearCart();
-    setOrderNumber((n) => n + 1);
   }
 
   return (
@@ -145,8 +148,10 @@ export function OrderPanel() {
       <CheckoutModal
         open={isCheckoutOpen}
         total={total}
+        isSubmitting={isSubmitting}
+        error={checkoutError}
         onConfirm={handleConfirm}
-        onClose={() => setIsCheckoutOpen(false)}
+        onClose={() => { setIsCheckoutOpen(false); setCheckoutError(null); }}
       />
 
       <SaleSuccessModal

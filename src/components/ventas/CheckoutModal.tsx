@@ -15,11 +15,13 @@ interface CheckoutModalProps {
   open: boolean;
   total: number;
   persistent?: boolean;
+  isSubmitting?: boolean;
+  error?: string | null;
   onConfirm: (method: PaymentMethod, received: number) => void;
   onClose: () => void;
 }
 
-export function CheckoutModal({ open, total, persistent = true, onConfirm, onClose }: CheckoutModalProps) {
+export function CheckoutModal({ open, total, persistent = true, isSubmitting = false, error = null, onConfirm, onClose }: CheckoutModalProps) {
   const [method, setMethod] = useState<PaymentMethod>("efectivo");
   const [received, setReceived] = useState("");
 
@@ -131,25 +133,30 @@ export function CheckoutModal({ open, total, persistent = true, onConfirm, onClo
           </div>
         )}
 
+        {error && (
+          <p className="mb-3 rounded-lg bg-danger/10 px-3 py-2 text-xs text-danger">{error}</p>
+        )}
+
         {/* Actions */}
         <div className="flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+            disabled={isSubmitting}
+            className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
           >
             Cancelar
           </button>
           <button
             onClick={handleConfirm}
-            disabled={!canConfirm}
+            disabled={!canConfirm || isSubmitting}
             className={cn(
               "flex-1 rounded-xl py-2.5 text-sm font-semibold transition-colors",
-              canConfirm
+              canConfirm && !isSubmitting
                 ? "bg-primary text-white hover:bg-primary/90"
                 : "cursor-not-allowed bg-secondary text-muted-foreground",
             )}
           >
-            Confirmar pago
+            {isSubmitting ? "Procesando..." : "Confirmar pago"}
           </button>
         </div>
       </div>
