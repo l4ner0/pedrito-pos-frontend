@@ -70,7 +70,7 @@ export function ProductCatalog() {
   ];
 
   return (
-    <div className="flex h-full flex-col overflow-hidden bg-background px-6 py-4">
+    <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background px-6 py-4">
       {/* Search */}
       <div className="relative mb-4 shrink-0">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -95,7 +95,7 @@ export function ProductCatalog() {
         <div
           ref={scrollRef}
           onScroll={checkScroll}
-          className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 flex-1 gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {categoryChips.map(({ value, label }) => (
             <button
@@ -124,9 +124,9 @@ export function ProductCatalog() {
       {/* Product grid */}
       <div className="overflow-y-auto">
         {isLoading ? (
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-4 lg:gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex flex-col items-center gap-2 rounded-xl bg-card p-4 shadow-sm">
+              <div key={i} className="flex flex-col items-center gap-2 rounded-xl bg-card p-3 shadow-sm lg:p-4">
                 <div className="h-14 w-14 animate-pulse rounded-full bg-secondary" />
                 <div className="h-3 w-20 animate-pulse rounded bg-secondary" />
                 <div className="h-3 w-12 animate-pulse rounded bg-secondary" />
@@ -136,7 +136,7 @@ export function ProductCatalog() {
         ) : products.length === 0 ? (
           <p className="py-12 text-center text-sm text-muted-foreground">No se encontraron productos</p>
         ) : (
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-4 lg:gap-3">
             {products.map((product) => (
               <ProductCard key={product.id} product={product} onClick={addItem} />
             ))}
