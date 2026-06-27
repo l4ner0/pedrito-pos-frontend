@@ -1,21 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { Search } from "lucide-react";
-import { type Product, type ProductCategory } from "@/lib/mock-data";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { type Product } from "@/lib/mock-data";
+import { fetchCategories, type Category } from "@/services/categoryService";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
-
-const CATEGORIES: { value: ProductCategory | "todos"; label: string }[] = [
-  { value: "todos", label: "Todos" },
-  { value: "bebidas", label: "Bebidas" },
-  { value: "snacks", label: "Snacks" },
-  { value: "lacteos", label: "Lácteos" },
-  { value: "panaderia", label: "Panadería" },
-  { value: "limpieza", label: "Limpieza" },
-  { value: "frutas", label: "Frutas" },
-];
 
 interface ProductCatalogProps {
   products: Product[];
@@ -23,8 +14,39 @@ interface ProductCatalogProps {
 
 export function ProductCatalog({ products }: ProductCatalogProps) {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState<ProductCategory | "todos">("todos");
+  const [category, setCategory] = useState("todos");
+  const [categories, setCategories] = useState<Category[]>([]);
   const { addItem } = useCartStore();
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  useEffect(() => {
+    fetchCategories().then(setCategories);
+  }, []);
+
+  function checkScroll() {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }
+
+  useEffect(() => {
+    checkScroll();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories]);
+
+  const categoryChips = [
+    { value: "todos", label: "Todos" },
+    ...categories
+      .filter((c) => c.active)
+      .map((c) => ({
+        value: c.name,
+        label: c.name.charAt(0).toUpperCase() + c.name.slice(1),
+      })),
+  ];
 
   const filtered = products.filter((p) => {
     const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
@@ -46,22 +68,42 @@ export function ProductCatalog({ products }: ProductCatalogProps) {
         />
       </div>
 
-      {/* Category chips */}
-      <div className="mb-4 flex shrink-0 flex-wrap gap-2">
-        {CATEGORIES.map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => setCategory(value)}
-            className={cn(
-              "rounded-full px-3.5 py-1 text-sm font-medium transition-colors",
-              category === value
-                ? "bg-primary text-white"
-                : "border border-border text-muted-foreground hover:border-primary hover:text-primary",
-            )}
-          >
-            {label}
-          </button>
-        ))}
+      {/* Category chips carousel */}
+      <div className="mb-4 flex shrink-0 items-center gap-1">
+        <button
+          onClick={() => scrollRef.current?.scrollBy({ left: -200, behavior: "smooth" })}
+          disabled={!canScrollLeft}
+          className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <div
+          ref={scrollRef}
+          onScroll={checkScroll}
+          className="flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {categoryChips.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => setCategory(value)}
+              className={cn(
+                "shrink-0 rounded-full px-3.5 py-1 text-sm font-medium transition-colors",
+                category === value
+                  ? "bg-primary text-white"
+                  : "border border-border text-muted-foreground hover:border-primary hover:text-primary",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={() => scrollRef.current?.scrollBy({ left: 200, behavior: "smooth" })}
+          disabled={!canScrollRight}
+          className="shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-30"
+        >
+          <ChevronRight size={16} />
+        </button>
       </div>
 
       {/* Product grid */}
