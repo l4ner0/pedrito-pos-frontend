@@ -5,21 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Filter, Plus } from "lucide-react";
 import { PeriodFilter } from "@/components/ui/PeriodFilter";
 
-export const CATEGORY_OPTIONS = [
-  { value: "todos", label: "Todos" },
-  { value: "bebidas", label: "Bebidas" },
-  { value: "snacks", label: "Snacks" },
-  { value: "lacteos", label: "Lácteos" },
-  { value: "panaderia", label: "Panadería" },
-  { value: "limpieza", label: "Limpieza" },
-  { value: "frutas", label: "Frutas" },
-];
-
 interface InventoryFiltersProps {
   onAdd: () => void;
+  categoryOptions: { value: string; label: string }[];
 }
 
-export function InventoryFilters({ onAdd }: InventoryFiltersProps) {
+export function InventoryFilters({ onAdd, categoryOptions }: InventoryFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchValue, setSearchValue] = useState(searchParams.get("q") ?? "");
@@ -29,6 +20,7 @@ export function InventoryFilters({ onAdd }: InventoryFiltersProps) {
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set("q", value);
     else params.delete("q");
+    params.delete("page");
     router.replace(`?${params.toString()}`);
   }
 
@@ -36,6 +28,7 @@ export function InventoryFilters({ onAdd }: InventoryFiltersProps) {
     const params = new URLSearchParams(searchParams.toString());
     if (value === "todos") params.delete("categoria");
     else params.set("categoria", value);
+    params.delete("page");
     router.replace(`?${params.toString()}`);
   }
 
@@ -58,7 +51,7 @@ export function InventoryFilters({ onAdd }: InventoryFiltersProps) {
       </div>
 
       <PeriodFilter
-        options={CATEGORY_OPTIONS}
+        options={categoryOptions}
         value={categoria}
         onChange={handleCategory}
         icon={Filter}
