@@ -28,6 +28,16 @@ Tests use **Vitest** + **@testing-library/react** + jsdom. Config in `vitest.con
 - **lucide-react** — icon library
 - **pnpm** as the package manager
 
+## Environment
+
+Create `.env.local` in the project root with:
+
+```
+NEXT_PUBLIC_API_URL=http://localhost:8080
+```
+
+No `.env.local` is checked into the repo. The default fallback in service files is `http://localhost:8080`.
+
 ## Path alias
 
 `@/*` resolves to `./src/*` (configured in `tsconfig.json`).
@@ -105,12 +115,12 @@ Custom dropdowns (`UserMenu`, `PeriodFilter`) follow the same pattern: local `op
 
 ### Ventas / POS architecture
 
-`ventas/page.tsx` is a Server Component that passes the full `products` array to `VentasContent` (client). `VentasContent` toggles between two tabs:
+`ventas/page.tsx` is a Server Component that passes the full `products` array (from `lib/mock-data.ts`) to `VentasContent` (client). **Ventas is not yet integrated with the backend API** — products come from mock data; sales are not persisted. `VentasContent` toggles between two tabs:
 
 - **Punto de Venta**: two-panel layout — `OrderPanel` (fixed 420px left) + `ProductCatalog` (flex-1 right). Adding a product calls `useCartStore().addItem()`.
 - **Listado de ventas**: `ListadoDeVentas` shows sales from `salesData` with a `SaleDetailModal` for per-row detail.
 
-Cart state lives in `src/store/cartStore.ts` (`useCartStore`): items, discountAmount, and actions (addItem / removeItem / updateQuantity / clearCart / setDiscount). `OrderPanel` owns the `CheckoutModal` and the post-payment `SaleSuccessModal`.
+Cart state lives in `src/store/cartStore.ts` (`useCartStore`): items (`CartItem[]` where `product` is typed as `Product` from mock-data), discountAmount, and actions (addItem / removeItem / updateQuantity / clearCart / setDiscount). `OrderPanel` owns the `CheckoutModal` and the post-payment `SaleSuccessModal`.
 
 `CheckoutModal` supports two payment methods: **Efectivo** (shows received amount + change) and **Yape** (shows QR placeholder). It resets its own state on open via `useEffect([open])`. On successful payment it passes a `SaleSuccessData` object to `SaleSuccessModal`, which renders a full ticket receipt (items, totals, ticket ID, datetime) with a print button (`window.print()`).
 
@@ -165,7 +175,7 @@ Note: `--destructive` (shadcn) and `--danger` (custom) both map to `#C45B5B`. Us
 
 When implementing new features, always extract reusable UI elements as atomic components under `src/components/ui/`. A component is atomic if it can be used in more than one context (badges, avatars, inputs, specialized buttons, etc.). Section-specific components live in their own folder (`inventory/`, `ventas/`, etc.).
 
-**`DataTable<T>`** (`src/components/ui/DataTable.tsx`) — generic paginated table. Define columns via `Column<T>[]` (each with `header`, `cell`, optional `skeleton`, optional `cellClassName` as string or `(row: T) => string`). Props include `page` (1-based), `pageSize`, `pageSizeOptions`, `totalPages`, `totalElements`, `itemLabel`, `footerExtra`, `isLoading`, `skeletonRows`. Use `ProductTable` as a reference wrapper. The trailing comma in `DataTable<T,>` is required to disambiguate from JSX.
+**`DataTable<T>`** (`src/components/ui/DataTable.tsx`) — generic paginated table. Define columns via `Column<T>[]` (each with `header`, `cell`, optional `headerClassName`, optional `skeleton`, optional `cellClassName` as string or `(row: T) => string`). Required props: `data`, `keyExtractor: (row: T) => string`, `page` (1-based), `pageSize`, `pageSizeOptions`, `totalPages`, `totalElements`, `onPageChange`, `onPageSizeChange`. Optional: `itemLabel` (`{ singular, plural }`), `footerExtra`, `isLoading`, `skeletonRows`, `emptyMessage`. Use `ProductTable` as a reference wrapper. The trailing comma in `DataTable<T,>` is required to disambiguate from JSX.
 
 **`Combobox`** (`src/components/ui/Combobox.tsx`) — searchable select with optional inline creation. Pass `onCreateNew` to enable a "create new" row when no option matches the typed text; `createNewLabel` customizes the label. Uses the same outside-click-to-close pattern as other custom dropdowns.
 
