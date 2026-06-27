@@ -9,20 +9,8 @@ import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { Toast } from "@/components/ui/Toast";
 import { type ApiProduct, fetchProducts } from "@/services/productService";
 import { fetchCategories, type Category } from "@/services/categoryService";
-import { type Product } from "@/lib/mock-data";
 
 const PAGE_SIZE_OPTIONS = [10, 50, 100];
-
-function toFormProduct(p: ApiProduct, categoryMap: Record<string, string>): Product {
-  return {
-    id: p.id,
-    name: p.name,
-    category: (categoryMap[p.categoryId] ?? "") as Product["category"],
-    stock: p.stock,
-    cost: 0,
-    price: p.price,
-  };
-}
 
 export function InventoryContent() {
   const router = useRouter();
@@ -40,7 +28,7 @@ export function InventoryContent() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ApiProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<ApiProduct | null>(null);
   const [toastMessage, setToastMessage] = useState("");
 
@@ -115,7 +103,7 @@ export function InventoryContent() {
   }
 
   function openEdit(product: ApiProduct) {
-    setEditingProduct(toFormProduct(product, categoryMap));
+    setEditingProduct(product);
     setIsFormOpen(true);
   }
 
@@ -123,7 +111,7 @@ export function InventoryContent() {
     setToastMessage(
       isEdit ? "Producto actualizado correctamente" : "Producto agregado correctamente",
     );
-    if (!isEdit) setRefreshKey((k) => k + 1);
+    setRefreshKey((k) => k + 1);
   }
 
   function handleNewCategory(name: string) {
@@ -157,6 +145,7 @@ export function InventoryContent() {
       <ProductFormModal
         open={isFormOpen}
         product={editingProduct}
+        categoryMap={categoryMap}
         onClose={() => setIsFormOpen(false)}
         onSuccess={handleFormSuccess}
         onNewCategory={handleNewCategory}

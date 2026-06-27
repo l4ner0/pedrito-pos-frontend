@@ -47,3 +47,14 @@ export async function createProduct(input: CreateProductInput): Promise<ApiProdu
   if (!res.ok) throw new Error("Error al crear producto");
   return res.json();
 }
+
+export type UpdateProductInput = CreateProductInput;
+
+export async function updateProduct(id: string, input: UpdateProductInput): Promise<ApiProduct> {
+  const res = await fetchWithAuth(`${API_URL}/v1/product/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error("Error al actualizar producto");
+  return res.json();
+}

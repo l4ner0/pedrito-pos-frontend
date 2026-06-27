@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
-import { type Product } from "@/lib/mock-data";
 import { fetchCategories, createCategory, type Category } from "@/services/categoryService";
-import { createProduct } from "@/services/productService";
+import { type ApiProduct, createProduct, updateProduct } from "@/services/productService";
 import { Combobox } from "@/components/ui/Combobox";
 import { StatusAlert } from "@/components/ui/status-alert";
 
@@ -24,19 +23,20 @@ const EMPTY_FORM: FormValues = {
   lowStockThreshold: "5",
 };
 
-function productToForm(p: Product): FormValues {
+function productToForm(p: ApiProduct, categoryName: string): FormValues {
   return {
     name: p.name,
-    category: p.category,
+    category: categoryName,
     price: String(p.price),
     stock: String(p.stock),
-    lowStockThreshold: "5",
+    lowStockThreshold: String(p.lowStockThreshold),
   };
 }
 
 interface ProductFormModalProps {
   open: boolean;
-  product: Product | null;
+  product: ApiProduct | null;
+  categoryMap: Record<string, string>;
   persistent?: boolean;
   onClose: () => void;
   onSuccess: (isEdit: boolean) => void;
@@ -46,6 +46,7 @@ interface ProductFormModalProps {
 export function ProductFormModal({
   open,
   product,
+  categoryMap,
   persistent = true,
   onClose,
   onSuccess,
@@ -66,7 +67,7 @@ export function ProductFormModal({
     }));
 
   useEffect(() => {
-    setForm(product ? productToForm(product) : EMPTY_FORM);
+    setForm(product ? productToForm(product, categoryMap[product.categoryId] ?? "") : EMPTY_FORM);
     setError("");
   }, [product, open]);
 
@@ -87,15 +88,9 @@ export function ProductFormModal({
     e.preventDefault();
     setError("");
 
-    if (isEdit) {
-      onClose();
-      onSuccess(true);
-      return;
-    }
-
     const stock = parseInt(form.stock, 10);
     const threshold = parseInt(form.lowStockThreshold, 10);
-    if (stock < threshold) {
+    if (!isEdit && stock < threshold) {
       setError("El stock no puede ser menor que la alerta de stock bajo.");
       return;
     }
@@ -106,18 +101,24 @@ export function ProductFormModal({
       return;
     }
 
+    const payload = {
+      name: form.name.trim(),
+      categoryId: matched.id,
+      sku: null,
+      price: parseFloat(form.price),
+      stock,
+      lowStockThreshold: threshold,
+    };
+
     setIsSubmitting(true);
     try {
-      await createProduct({
-        name: form.name.trim(),
-        categoryId: matched.id,
-        sku: null,
-        price: parseFloat(form.price),
-        stock: parseInt(form.stock, 10),
-        lowStockThreshold: parseInt(form.lowStockThreshold, 10),
-      });
+      if (isEdit) {
+        await updateProduct(product.id, payload);
+      } else {
+        await createProduct(payload);
+      }
       onClose();
-      onSuccess(false);
+      onSuccess(isEdit);
     } catch {
       setError("No se pudo guardar el producto. Intenta de nuevo.");
     } finally {
