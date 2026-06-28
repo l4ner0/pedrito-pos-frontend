@@ -70,7 +70,8 @@ src/
 ├── services/
 │   ├── authService.ts          # loginApi / refreshApi / logoutApi (call BFF route handlers)
 │   ├── categoryService.ts      # fetchCategories / createCategory (call backend directly)
-│   └── productService.ts       # fetchProducts / createProduct / updateProduct / deleteProduct
+│   ├── productService.ts       # fetchProducts / createProduct / updateProduct / deleteProduct
+│   └── saleService.ts          # fetchSales / fetchTopProducts / createSale
 └── lib/
     ├── api.ts                  # fetchWithAuth — attaches Bearer token, handles 401 refresh+retry
     ├── utils.ts                # cn() helper (clsx + tailwind-merge)
@@ -115,14 +116,20 @@ Custom dropdowns (`UserMenu`, `PeriodFilter`) follow the same pattern: local `op
 
 ### Ventas / POS architecture
 
-`ventas/page.tsx` is a Server Component that passes the full `products` array (from `lib/mock-data.ts`) to `VentasContent` (client). **Ventas is not yet integrated with the backend API** — products come from mock data; sales are not persisted. `VentasContent` toggles between two tabs:
+`ventas/page.tsx` is a thin Server Component that renders `VentasContent` (client). `VentasContent` toggles between two tabs:
 
-- **Punto de Venta**: two-panel layout — `OrderPanel` (fixed 420px left) + `ProductCatalog` (flex-1 right). Adding a product calls `useCartStore().addItem()`.
-- **Listado de ventas**: `ListadoDeVentas` shows sales from `salesData` with a `SaleDetailModal` for per-row detail.
+- **Punto de Venta**: two-panel layout — `OrderPanel` (fixed 420px left) + `ProductCatalog` (flex-1 right).
+- **Listado de ventas**: `ListadoDeVentas` — paginated table of real sales from `GET /v1/sale`.
 
-Cart state lives in `src/store/cartStore.ts` (`useCartStore`): items (`CartItem[]` where `product` is typed as `Product` from mock-data), discountAmount, and actions (addItem / removeItem / updateQuantity / clearCart / setDiscount). `OrderPanel` owns the `CheckoutModal` and the post-payment `SaleSuccessModal`.
+**`ProductCatalog`** fetches products from the backend with load-more pagination (12 per page, appends on "Ver más"). When no filters are active it uses `GET /v1/sale/top-products` (most-sold products); with any search/category filter active it switches to `GET /v1/product`. Both endpoints return `ProductPage`. The top-products endpoint may return a flat `ApiProduct[]` — `fetchTopProducts` normalizes this into a `ProductPage` object. The fetch effect accumulates results: `page === 1` replaces, higher pages append. Debounce and category chip clicks only reset `page` to 1 — they never clear `products[]` directly; the fetch effect handles replacement via the `page === 1` check to avoid race conditions.
 
-`CheckoutModal` supports two payment methods: **Efectivo** (shows received amount + change) and **Yape** (shows QR placeholder). It resets its own state on open via `useEffect([open])`. On successful payment it passes a `SaleSuccessData` object to `SaleSuccessModal`, which renders a full ticket receipt (items, totals, ticket ID, datetime) with a print button (`window.print()`).
+**`OrderPanel`** → on checkout calls `createSale` (`POST /v1/sale`) with `{ discountAmount, paymentMethod, amountReceived, items: [{ productId, quantity }] }`. On success, passes `SaleResponse` to `SaleSuccessModal` and clears the cart.
+
+Cart state lives in `src/store/cartStore.ts` (`useCartStore`): items (`CartItem[]` where `product: ApiProduct`), `discountAmount`, and actions (`addItem` / `removeItem` / `updateQuantity` / `clearCart` / `setDiscount`).
+
+`CheckoutModal` supports two payment methods: **Efectivo** (shows received amount + change) and **Yape** (shows QR placeholder). It resets its own state on open via `useEffect([open])`. On successful payment `OrderPanel` passes `SaleResponse` to `SaleSuccessModal`, which renders a full ticket receipt (items, totals, ticket ID, datetime) with a print button (`window.print()`).
+
+**`ListadoDeVentas`** fetches from `GET /v1/sale` with filters: `ticketCode`, `paymentMethod`, `status`, and a time period (`from` / `to`). Period dates are computed in Lima timezone (America/Lima, UTC-5) and sent as full UTC datetime strings **without** a timezone suffix (e.g. `"2026-06-27T05:00:00.000"` for midnight Lima). This is required because the backend stores timestamps in UTC with no DST offset.
 
 ### Configuracion
 
@@ -132,9 +139,8 @@ Cart state lives in `src/store/cartStore.ts` (`useCartStore`): items (`CartItem[
 
 `lib/mock-data.ts` exports:
 - `Product` interface + `ProductCategory` union type + `products` array (12 items) + `LOW_STOCK_THRESHOLD = 8`
-- `getDashboardData(period)` — returns `DashboardData` keyed by `"today" | "yesterday" | "week"`
-- `Sale` interface + `SaleItem` + `SaleMethod` union (`"Efectivo" | "Tarjeta" | "Yape"`)
-- `salesData` — `Record<"today" | "week" | "month", Sale[]>` (cumulative: week includes today, month includes week)
+- `getDashboardData(period)` — returns `DashboardData` keyed by `"today" | "yesterday" | "week"` (used by the Dashboard page)
+- `Sale` / `SaleItem` / `SaleMethod` types + `salesData` are defined here but are **not used** by Ventas — Ventas fetches real data from the backend
 
 ## Design system
 
