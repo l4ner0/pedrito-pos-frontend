@@ -24,7 +24,7 @@ import { PeriodFilter } from "@/components/ui/PeriodFilter";
 type Period = "today" | "week" | "month";
 
 function toDateString(d: Date): string {
-  return d.toISOString().split("T")[0];
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Lima" });
 }
 
 function getPeriodRange(period: Period): { from: string; to: string } {
@@ -36,8 +36,9 @@ function getPeriodRange(period: Period): { from: string; to: string } {
     from.setDate(now.getDate() - 6);
     return { from: toDateString(from), to };
   }
-  const from = new Date(now.getFullYear(), now.getMonth(), 1);
-  return { from: toDateString(from), to };
+  const [year, month] = to.split("-").map(Number);
+  const from = `${year}-${String(month).padStart(2, "0")}-01`;
+  return { from, to };
 }
 
 const METHOD_VARIANT: Record<SalePaymentMethod, BadgeVariant> = {
