@@ -23,22 +23,31 @@ import { PeriodFilter } from "@/components/ui/PeriodFilter";
 
 type Period = "today" | "week" | "month";
 
-function toDateString(d: Date): string {
+function limaDateString(d: Date): string {
   return d.toLocaleDateString("en-CA", { timeZone: "America/Lima" });
+}
+
+function toUTC(limaDate: string, time: "start" | "end"): string {
+  const iso = time === "start"
+    ? `${limaDate}T00:00:00-05:00`
+    : `${limaDate}T23:59:59.999-05:00`;
+  return new Date(iso).toISOString().replace("Z", "");
 }
 
 function getPeriodRange(period: Period): { from: string; to: string } {
   const now = new Date();
-  const to = toDateString(now);
-  if (period === "today") return { from: to, to };
-  if (period === "week") {
-    const from = new Date(now);
-    from.setDate(now.getDate() - 6);
-    return { from: toDateString(from), to };
+  const today = limaDateString(now);
+  if (period === "today") {
+    return { from: toUTC(today, "start"), to: toUTC(today, "end") };
   }
-  const [year, month] = to.split("-").map(Number);
-  const from = `${year}-${String(month).padStart(2, "0")}-01`;
-  return { from, to };
+  if (period === "week") {
+    const sixDaysAgo = new Date(now);
+    sixDaysAgo.setDate(now.getDate() - 6);
+    return { from: toUTC(limaDateString(sixDaysAgo), "start"), to: toUTC(today, "end") };
+  }
+  const [year, month] = today.split("-").map(Number);
+  const firstDay = `${year}-${String(month).padStart(2, "0")}-01`;
+  return { from: toUTC(firstDay, "start"), to: toUTC(today, "end") };
 }
 
 const METHOD_VARIANT: Record<SalePaymentMethod, BadgeVariant> = {
