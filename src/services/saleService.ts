@@ -1,4 +1,5 @@
 import { fetchWithAuth } from "@/lib/api";
+import { type ApiProduct, type ProductPage } from "@/services/productService";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -67,6 +68,21 @@ export async function fetchSales(
   const res = await fetchWithAuth(`${API_URL}/v1/sale?${params}`, { signal });
   if (!res.ok) throw new Error("Error al cargar las ventas");
   return res.json();
+}
+
+export async function fetchTopProducts(
+  page = 1,
+  size = 12,
+  signal?: AbortSignal,
+): Promise<ProductPage> {
+  const params = new URLSearchParams({ page: String(page), size: String(size) });
+  const res = await fetchWithAuth(`${API_URL}/v1/sale/top-products?${params}`, { signal });
+  if (!res.ok) throw new Error("Error al cargar los productos más vendidos");
+  const data: ApiProduct[] | ProductPage = await res.json();
+  if (Array.isArray(data)) {
+    return { content: data, page, size, totalElements: data.length, totalPages: 1 };
+  }
+  return data;
 }
 
 export async function createSale(input: CreateSaleInput): Promise<SaleResponse> {

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { fetchCategories, type Category } from "@/services/categoryService";
 import { fetchProducts, type ApiProduct } from "@/services/productService";
+import { fetchTopProducts } from "@/services/saleService";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
@@ -42,10 +43,14 @@ export function ProductCatalog() {
     const controller = new AbortController();
     if (page === 1) setIsLoading(true);
     else setIsLoadingMore(true);
-    fetchProducts(page, PAGE_SIZE, controller.signal, {
-      name: debouncedSearch || undefined,
-      categoryName: category !== "todos" ? category : undefined,
-    })
+    const hasFilters = debouncedSearch !== "" || category !== "todos";
+    const request = hasFilters
+      ? fetchProducts(page, PAGE_SIZE, controller.signal, {
+          name: debouncedSearch || undefined,
+          categoryName: category !== "todos" ? category : undefined,
+        })
+      : fetchTopProducts(page, PAGE_SIZE, controller.signal);
+    request
       .then((data) => {
         setProducts((prev) => page === 1 ? data.content : [...prev, ...data.content]);
         setHasMore(page < data.totalPages);
