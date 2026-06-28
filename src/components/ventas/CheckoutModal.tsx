@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X, Banknote, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBusinessStore } from "@/store/businessStore";
 
 export type PaymentMethod = "efectivo" | "yape";
 
@@ -22,6 +23,7 @@ interface CheckoutModalProps {
 }
 
 export function CheckoutModal({ open, total, persistent = true, isSubmitting = false, error = null, onConfirm, onClose }: CheckoutModalProps) {
+  const { settings } = useBusinessStore();
   const [method, setMethod] = useState<PaymentMethod>("efectivo");
   const [received, setReceived] = useState("");
 
@@ -117,19 +119,33 @@ export function CheckoutModal({ open, total, persistent = true, isSubmitting = f
         {/* Yape QR */}
         {method === "yape" && (
           <div className="mb-5 flex flex-col items-center gap-3">
-            <div
-              className="flex h-44 w-44 items-center justify-center rounded-xl border border-border"
-              style={{
-                backgroundImage:
-                  "repeating-linear-gradient(45deg, #e2e5ea 0px, #e2e5ea 1px, #f5f6f8 1px, #f5f6f8 10px)",
-              }}
-            >
-              <span className="rounded-md bg-card/80 px-2 py-1 text-xs text-muted-foreground">
-                [ QR Yape ]
-              </span>
-            </div>
-            <p className="text-lg font-bold tracking-[0.2em] text-foreground">987 654 321</p>
-            <p className="text-sm text-muted-foreground">Amelia Torres Quispe</p>
+            {settings?.yapeQrUrl ? (
+              <img
+                src={settings.yapeQrUrl}
+                alt="QR Yape"
+                className="h-44 w-44 rounded-xl border border-border object-contain"
+              />
+            ) : (
+              <div
+                className="flex h-44 w-44 items-center justify-center rounded-xl border border-border"
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(45deg, #e2e5ea 0px, #e2e5ea 1px, #f5f6f8 1px, #f5f6f8 10px)",
+                }}
+              >
+                <span className="rounded-md bg-card/80 px-2 py-1 text-xs text-muted-foreground">
+                  Sin QR configurado
+                </span>
+              </div>
+            )}
+            {settings?.yapeNumber && (
+              <p className="text-lg font-bold tracking-[0.2em] text-foreground">
+                {settings.yapeNumber}
+              </p>
+            )}
+            {settings?.yapeAccountHolder && (
+              <p className="text-sm text-muted-foreground">{settings.yapeAccountHolder}</p>
+            )}
           </div>
         )}
 
