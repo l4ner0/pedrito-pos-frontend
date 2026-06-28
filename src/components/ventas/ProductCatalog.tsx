@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { fetchCategories, type Category } from "@/services/categoryService";
 import { fetchProducts, type ApiProduct } from "@/services/productService";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { useCartStore } from "@/store/cartStore";
 import { cn } from "@/lib/utils";
+
+const PAGE_SIZE = 12;
 
 export function ProductCatalog() {
   const [search, setSearch] = useState("");
@@ -14,7 +16,10 @@ export function ProductCatalog() {
   const [category, setCategory] = useState("todos");
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<ApiProduct[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const { addItem } = useCartStore();
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -26,26 +31,35 @@ export function ProductCatalog() {
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedSearch(search), 400);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
     return () => clearTimeout(timer);
   }, [search]);
 
   useEffect(() => {
     const controller = new AbortController();
-    setIsLoading(true);
-    fetchProducts(1, 100, controller.signal, {
+    if (page === 1) setIsLoading(true);
+    else setIsLoadingMore(true);
+    fetchProducts(page, PAGE_SIZE, controller.signal, {
       name: debouncedSearch || undefined,
       categoryName: category !== "todos" ? category : undefined,
     })
       .then((data) => {
-        setProducts(data.content);
+        setProducts((prev) => page === 1 ? data.content : [...prev, ...data.content]);
+        setHasMore(page < data.totalPages);
         setIsLoading(false);
+        setIsLoadingMore(false);
       })
       .catch((err: unknown) => {
-        if ((err as Error).name !== "AbortError") setIsLoading(false);
+        if ((err as Error).name !== "AbortError") {
+          setIsLoading(false);
+          setIsLoadingMore(false);
+        }
       });
     return () => controller.abort();
-  }, [debouncedSearch, category]);
+  }, [page, debouncedSearch, category]);
 
   function checkScroll() {
     const el = scrollRef.current;
@@ -100,7 +114,7 @@ export function ProductCatalog() {
           {categoryChips.map(({ value, label }) => (
             <button
               key={value}
-              onClick={() => setCategory(value)}
+              onClick={() => { setCategory(value); setPage(1); }}
               className={cn(
                 "shrink-0 rounded-full px-3.5 py-1 text-sm font-medium transition-colors",
                 category === value
@@ -125,7 +139,7 @@ export function ProductCatalog() {
       <div className="overflow-y-auto">
         {isLoading ? (
           <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-4 lg:gap-3">
-            {Array.from({ length: 8 }).map((_, i) => (
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
               <div key={i} className="flex flex-col items-center gap-2 rounded-xl bg-card p-3 shadow-sm lg:p-4">
                 <div className="h-14 w-14 animate-pulse rounded-full bg-secondary" />
                 <div className="h-3 w-20 animate-pulse rounded bg-secondary" />
@@ -136,11 +150,25 @@ export function ProductCatalog() {
         ) : products.length === 0 ? (
           <p className="py-12 text-center text-sm text-muted-foreground">No se encontraron productos</p>
         ) : (
-          <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-4 lg:gap-3">
-            {products.map((product) => (
-              <ProductCard key={product.id} product={product} onClick={addItem} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-3 gap-2.5 lg:grid-cols-4 lg:gap-3">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} onClick={addItem} />
+              ))}
+            </div>
+            {hasMore && (
+              <div className="mt-4 flex justify-center pb-2">
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={isLoadingMore}
+                  className="flex items-center gap-1 text-sm text-muted-foreground underline underline-offset-2 transition-colors hover:text-primary disabled:opacity-50"
+                >
+                  <ChevronDown size={14} />
+                  {isLoadingMore ? "Cargando..." : "Ver más"}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
