@@ -24,7 +24,7 @@ Tests use **Vitest** + **@testing-library/react** + jsdom. Config in `vitest.con
 - **Tailwind CSS v4** — CSS-first configuration; no `tailwind.config.ts`. All design tokens are defined in `src/app/globals.css` via `@theme inline`.
 - **shadcn/ui** — primitives (`button.tsx`, `input.tsx`, etc.) installed in `src/components/ui/`. Do not modify shadcn files directly; extend via wrapper components. Custom atomic components also live in the same folder alongside the shadcn primitives. Integrated via `@import "shadcn/tailwind.css"` in `globals.css`.
 - **@base-ui/react** — installed as an alternative primitive library if needed
-- **Zustand** — global state; stores at `src/store/` (`authStore.ts` for auth, `cartStore.ts` for cart)
+- **Zustand** — global state; stores at `src/store/` (`authStore.ts` for auth, `cartStore.ts` for cart, `businessStore.ts` for business data + settings)
 - **lucide-react** — icon library
 - **pnpm** as the package manager
 
@@ -66,12 +66,14 @@ src/
 │   └── configuracion/          # ConfiguracionContent
 ├── store/
 │   ├── authStore.ts            # Zustand auth store (in-memory: accessToken + user)
-│   └── cartStore.ts            # Zustand cart store
+│   ├── cartStore.ts            # Zustand cart store
+│   └── businessStore.ts        # Zustand store: business (BusinessData) + settings (BusinessSettings)
 ├── services/
 │   ├── authService.ts          # loginApi / refreshApi / logoutApi (call BFF route handlers)
 │   ├── categoryService.ts      # fetchCategories / createCategory (call backend directly)
 │   ├── productService.ts       # fetchProducts / createProduct / updateProduct / deleteProduct
-│   └── saleService.ts          # fetchSales / fetchTopProducts / createSale
+│   ├── saleService.ts          # fetchSales / fetchTopProducts / createSale
+│   └── businessService.ts      # fetchBusiness / fetchBusinessSettings / updateBusiness / updateBusinessSettings
 └── lib/
     ├── api.ts                  # fetchWithAuth — attaches Bearer token, handles 401 refresh+retry
     ├── utils.ts                # cn() helper (clsx + tailwind-merge)
@@ -86,8 +88,8 @@ The backend runs at `NEXT_PUBLIC_API_URL` (default `http://localhost:8080`). Aut
 
 - **User roles**: `UserRole = "ADMIN" | "CASHIER"` (exported from `authStore.ts`). Available in `useAuthStore().user.role` after login.
 - **Login flow**: `LoginForm` → `loginApi(username, password)` → `/api/auth/login` (route handler) → backend → sets httpOnly cookie, returns `accessToken + user` to client → `authStore.setAuth()`
-- **Session restore on reload**: `AuthGuard` calls `refreshApi()` on mount; if the httpOnly cookie is valid, the backend returns a new token pair
-- **Authenticated requests**: use `fetchWithAuth(url, options)` from `src/lib/api.ts`. It attaches `Authorization: Bearer {token}`, and on 401 automatically refreshes (mutex prevents concurrent refresh calls) and retries the original request
+- **Session restore on reload**: `AuthGuard` calls `refreshApi()` on mount; if the httpOnly cookie is valid, the backend returns a new token pair. After auth is confirmed, `AuthGuard` always fetches `GET /v1/business` and `GET /v1/business/settings` in parallel and stores them in `businessStore`. This runs on every page load/refresh (Zustand is in-memory, so state is wiped on reload). Children are not rendered until both requests resolve.
+- **Authenticated requests**: use `fetchWithAuth(url, options)` from `src/lib/api.ts`. It attaches `Authorization: Bearer {token}`, and on 401 automatically refreshes (mutex prevents concurrent refresh calls) and retries the original request. When `options.body` is a `FormData` instance, `Content-Type` is omitted so the browser sets `multipart/form-data` with the correct boundary automatically.
 - **Route handlers vs direct calls**: route handlers are only for auth (need to touch httpOnly cookies). All other backend calls go direct from the client using `fetchWithAuth` with `NEXT_PUBLIC_API_URL`
 
 ### Sidebar collapse
@@ -127,13 +129,21 @@ Custom dropdowns (`UserMenu`, `PeriodFilter`) follow the same pattern: local `op
 
 Cart state lives in `src/store/cartStore.ts` (`useCartStore`): items (`CartItem[]` where `product: ApiProduct`), `discountAmount`, and actions (`addItem` / `removeItem` / `updateQuantity` / `clearCart` / `setDiscount`).
 
-`CheckoutModal` supports two payment methods: **Efectivo** (shows received amount + change) and **Yape** (shows QR placeholder). It resets its own state on open via `useEffect([open])`. On successful payment `OrderPanel` passes `SaleResponse` to `SaleSuccessModal`, which renders a full ticket receipt (items, totals, ticket ID, datetime) with a print button (`window.print()`).
+`CheckoutModal` supports two payment methods: **Efectivo** (shows received amount + change) and **Yape** (shows QR image, phone number, and account holder from `useBusinessStore().settings`; falls back to a placeholder if `yapeQrUrl` is null). It resets its own state on open via `useEffect([open])`. On successful payment `OrderPanel` passes `SaleResponse` to `SaleSuccessModal`, which renders a full ticket receipt (items, totals, ticket ID, datetime) with a print button (`window.print()`).
 
 **`ListadoDeVentas`** fetches from `GET /v1/sale` with filters: `ticketCode`, `paymentMethod`, `status`, and a time period (`from` / `to`). Period dates are computed in Lima timezone (America/Lima, UTC-5) and sent as full UTC datetime strings **without** a timezone suffix (e.g. `"2026-06-27T05:00:00.000"` for midnight Lima). This is required because the backend stores timestamps in UTC with no DST offset.
 
 ### Configuracion
 
-`ConfiguracionContent` is a pure client-side form with local state (no Zustand, no persistence). Sections: user profile (with avatar file upload), business info, payment methods (Yape number + QR image upload), and print settings.
+`ConfiguracionContent` has three tabs, each independent:
+
+- **Perfil** — avatar + nombre completo + rol (read from `useAuthStore`). No backend endpoint yet; local state only.
+- **Información del negocio** — nombre, RUC, teléfono, dirección. Initialized from `useBusinessStore().business`. Save calls `PATCH /v1/business` via `updateBusiness()` and updates the store with the response.
+- **Configuración** — Yape (número, titular, QR image) + impresión. Initialized from `useBusinessStore().settings`. Save calls `PATCH /v1/business/settings` via `updateBusinessSettings()` as `multipart/form-data` and updates the store. The QR image file is tracked as a `File` object in local state (`qrFile`); a `blob:` URL is kept separately for preview only. If no new file was selected, `file` is `null` and the backend preserves the existing QR.
+
+**`businessService.ts`** exports: `BusinessData`, `BusinessSettings`, `UpdateBusinessInput`, `UpdateBusinessSettingsInput`, `fetchBusiness()`, `fetchBusinessSettings()`, `updateBusiness(input)`, `updateBusinessSettings(input)`. `updateBusiness` uses JSON; `updateBusinessSettings` uses `FormData` (field `file` for the QR image, remaining fields as strings). All use `fetchWithAuth`.
+
+**`businessStore.ts`** (`useBusinessStore`): `business: BusinessData | null`, `settings: BusinessSettings | null`, `setBusiness`, `setSettings`, `clearBusiness` (clears both). Populated by `AuthGuard` on every page load.
 
 ### Mock data
 

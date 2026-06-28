@@ -104,9 +104,8 @@ export function ConfiguracionContent() {
     numero: settings?.yapeNumber ?? "",
     titular: settings?.yapeAccountHolder ?? "",
   });
-  const [qrPreview, setQrPreview] = useState<string | null>(
-    settings?.yapeQrUrl ?? null,
-  );
+  const [qrPreview, setQrPreview] = useState<string | null>(settings?.yapeQrUrl ?? null);
+  const [qrFile, setQrFile] = useState<File | null>(null);
   const qrInputRef = useRef<HTMLInputElement>(null);
   const [impresion, setImpresion] = useState({
     imprimirPorDefecto: settings?.printEnabled ?? true,
@@ -116,10 +115,12 @@ export function ConfiguracionContent() {
   function handleQrChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    setQrFile(file);
     setQrPreview(URL.createObjectURL(file));
   }
 
   function handleQrRemove() {
+    setQrFile(null);
     setQrPreview(null);
     if (qrInputRef.current) qrInputRef.current.value = "";
   }
@@ -128,13 +129,10 @@ export function ConfiguracionContent() {
     e.preventDefault();
     setIsSavingConfig(true);
     try {
-      const qrUrl = qrPreview?.startsWith("blob:")
-        ? (settings?.yapeQrUrl ?? null)
-        : (qrPreview ?? null);
       const updated = await updateBusinessSettings({
         yapeNumber: yape.numero || null,
         yapeAccountHolder: yape.titular || null,
-        yapeQrUrl: qrUrl,
+        file: qrFile,
         printEnabled: impresion.imprimirPorDefecto,
         ticketFooter: null,
       });

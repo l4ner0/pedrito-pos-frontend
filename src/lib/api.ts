@@ -15,10 +15,11 @@ async function doRefresh(): Promise<void> {
 
 function buildHeaders(
   token: string | null,
+  isFormData: boolean,
   extra?: HeadersInit,
 ): HeadersInit {
   return {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...extra,
   };
@@ -29,10 +30,11 @@ export async function fetchWithAuth(
   options: RequestInit = {},
 ): Promise<Response> {
   const { accessToken, clearAuth } = useAuthStore.getState();
+  const isFormData = options.body instanceof FormData;
 
   const res = await fetch(url, {
     ...options,
-    headers: buildHeaders(accessToken, options.headers),
+    headers: buildHeaders(accessToken, isFormData, options.headers),
   });
 
   if (res.status !== 401) return res;
@@ -53,6 +55,6 @@ export async function fetchWithAuth(
   const { accessToken: newToken } = useAuthStore.getState();
   return fetch(url, {
     ...options,
-    headers: buildHeaders(newToken, options.headers),
+    headers: buildHeaders(newToken, isFormData, options.headers),
   });
 }

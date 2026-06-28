@@ -54,8 +54,8 @@ export async function updateBusiness(input: UpdateBusinessInput): Promise<Busine
 
 export interface UpdateBusinessSettingsInput {
   yapeNumber: string | null;
-  yapeQrUrl: string | null;
   yapeAccountHolder: string | null;
+  file: File | null;
   printEnabled: boolean;
   ticketFooter: string | null;
 }
@@ -63,9 +63,16 @@ export interface UpdateBusinessSettingsInput {
 export async function updateBusinessSettings(
   input: UpdateBusinessSettingsInput,
 ): Promise<BusinessSettings> {
+  const form = new FormData();
+  if (input.file) form.append("file", input.file);
+  form.append("yapeNumber", input.yapeNumber ?? "");
+  form.append("yapeAccountHolder", input.yapeAccountHolder ?? "");
+  form.append("printEnabled", String(input.printEnabled));
+  form.append("ticketFooter", input.ticketFooter ?? "");
+
   const res = await fetchWithAuth(`${API_URL}/v1/business/settings`, {
     method: "PATCH",
-    body: JSON.stringify(input),
+    body: form,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => null);
